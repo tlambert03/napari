@@ -203,3 +203,4 @@ push_docs_task:
     - if [[ -z $(git status --untracked-files=no --porcelain) ]]; then exit 0; fi  # repo is clean 
     - git commit -m "dev docs v${VERSION}"
     - git push --quiet "https://${GH_TOKEN}@${GH_REF}" master > /dev/null 2>&1
+
