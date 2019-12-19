@@ -1070,7 +1070,7 @@ class Shapes(Layer):
         if self._is_moving:
             return self._moving_value
 
-        coord = [self.coordinates[i] for i in self.dims.displayed]
+        coord = self.coord
 
         # Check selected shapes
         value = None
@@ -1201,114 +1201,10 @@ class Shapes(Layer):
                     self.refresh()
                 elif vertex < Box.LEN:
                     # Corner / edge vertex is being dragged so resize object
-                    box = self._selected_box
-                    if self._fixed_vertex is None:
-                        self._fixed_index = (vertex + 4) % Box.LEN
-                        self._fixed_vertex = box[self._fixed_index]
-
-                    size = (
-                        box[(self._fixed_index + 4) % Box.LEN]
-                        - box[self._fixed_index]
-                    )
-                    offset = box[Box.HANDLE] - box[Box.CENTER]
-                    offset = offset / np.linalg.norm(offset)
-                    offset_perp = np.array([offset[1], -offset[0]])
-
-                    fixed = self._fixed_vertex
-                    new = list(coord)
-
-                    if self._fixed_aspect and self._fixed_index % 2 == 0:
-                        if (new - fixed)[0] == 0:
-                            ratio = 1
-                        else:
-                            ratio = abs((new - fixed)[1] / (new - fixed)[0])
-                        if ratio > self._aspect_ratio:
-                            r = self._aspect_ratio / ratio
-                            new[1] = fixed[1] + (new[1] - fixed[1]) * r
-                        else:
-                            r = ratio / self._aspect_ratio
-                            new[0] = fixed[0] + (new[0] - fixed[0]) * r
-
-                    if size @ offset == 0:
-                        dist = 1
-                    else:
-                        dist = ((new - fixed) @ offset) / (size @ offset)
-
-                    if size @ offset_perp == 0:
-                        dist_perp = 1
-                    else:
-                        dist_perp = ((new - fixed) @ offset_perp) / (
-                            size @ offset_perp
-                        )
-
-                    if self._fixed_index % 2 == 0:
-                        # corner selected
-                        scale = np.array([dist_perp, dist])
-                    elif self._fixed_index % 4 == 3:
-                        # top selected
-                        scale = np.array([1, dist])
-                    else:
-                        # side selected
-                        scale = np.array([dist_perp, 1])
-
-                    # prevent box from shrinking below a threshold size
-                    threshold = self._vertex_size * self.scale_factor / 8
-                    scale[abs(scale * size[[1, 0]]) < threshold] = 1
-
-                    # check orientation of box
-                    angle = -np.arctan2(offset[0], -offset[1])
-                    c, s = np.cos(angle), np.sin(angle)
-                    if angle == 0:
-                        for index in self.selected_data:
-                            self._data_view.scale(
-                                index, scale, center=self._fixed_vertex
-                            )
-                        self._scale_box(scale, center=self._fixed_vertex)
-                    else:
-                        rotation = np.array([[c, s], [-s, c]])
-                        scale_mat = np.array([[scale[0], 0], [0, scale[1]]])
-                        inv_rot = np.array([[c, -s], [s, c]])
-                        transform = rotation @ scale_mat @ inv_rot
-                        for index in self.selected_data:
-                            self._data_view.shift(index, -self._fixed_vertex)
-                            self._data_view.transform(index, transform)
-                            self._data_view.shift(index, self._fixed_vertex)
-                        self._transform_box(
-                            transform, center=self._fixed_vertex
-                        )
-                    self.refresh()
+                    self._resize_object(vertex, coord)
                 elif vertex == 8:
                     # Rotation handle is being dragged so rotate object
-                    handle = self._selected_box[Box.HANDLE]
-                    if self._drag_start is None:
-                        self._fixed_vertex = self._selected_box[Box.CENTER]
-                        offset = handle - self._fixed_vertex
-                        self._drag_start = -np.degrees(
-                            np.arctan2(offset[0], -offset[1])
-                        )
-
-                    new_offset = coord - self._fixed_vertex
-                    new_angle = -np.degrees(
-                        np.arctan2(new_offset[0], -new_offset[1])
-                    )
-                    fixed_offset = handle - self._fixed_vertex
-                    fixed_angle = -np.degrees(
-                        np.arctan2(fixed_offset[0], -fixed_offset[1])
-                    )
-
-                    if np.linalg.norm(new_offset) < 1:
-                        angle = 0
-                    elif self._fixed_aspect:
-                        angle = np.round(new_angle / 45) * 45 - fixed_angle
-                    else:
-                        angle = new_angle - fixed_angle
-
-                    for index in self.selected_data:
-                        self._data_view.rotate(
-                            index, angle, center=self._fixed_vertex
-                        )
-                    self._rotate_box(angle, center=self._fixed_vertex)
-                    self.refresh()
+                    self._rotate_object(coord)
             else:
                 self._is_selecting = True
                 if self._drag_start is None:
@@ -1354,6 +1250,101 @@ class Shapes(Layer):
                     self._drag_start = coord
                 self._drag_box = np.array([self._drag_start, coord])
                 self._set_highlight()
+
+    def _resize_object(self, vertex, coord):
+        box = self._selected_box
+        if self._fixed_vertex is None:
+            self._fixed_index = (vertex + 4) % Box.LEN
+            self._fixed_vertex = box[self._fixed_index]
+
+        size = box[(self._fixed_index + 4) % Box.LEN] - box[self._fixed_index]
+        offset = box[Box.HANDLE] - box[Box.CENTER]
+        offset = offset / np.linalg.norm(offset)
+        offset_perp = np.array([offset[1], -offset[0]])
+
+        fixed = self._fixed_vertex
+        new = list(coord)
+
+        if self._fixed_aspect and self._fixed_index % 2 == 0:
+            if (new - fixed)[0] == 0:
+                ratio = 1
+            else:
+                ratio = abs((new - fixed)[1] / (new - fixed)[0])
+            if ratio > self._aspect_ratio:
+                r = self._aspect_ratio / ratio
+                new[1] = fixed[1] + (new[1] - fixed[1]) * r
+            else:
+                r = ratio / self._aspect_ratio
+                new[0] = fixed[0] + (new[0] - fixed[0]) * r
+
+        if size @ offset == 0:
+            dist = 1
+        else:
+            dist = ((new - fixed) @ offset) / (size @ offset)
+
+        if size @ offset_perp == 0:
+            dist_perp = 1
+        else:
+            dist_perp = ((new - fixed) @ offset_perp) / (size @ offset_perp)
+
+        if self._fixed_index % 2 == 0:
+            # corner selected
+            scale = np.array([dist_perp, dist])
+        elif self._fixed_index % 4 == 3:
+            # top selected
+            scale = np.array([1, dist])
+        else:
+            # side selected
+            scale = np.array([dist_perp, 1])
+
+        # prevent box from shrinking below a threshold size
+        threshold = self._vertex_size * self.scale_factor / 8
+        scale[abs(scale * size[[1, 0]]) < threshold] = 1
+
+        # check orientation of box
+        angle = -np.arctan2(offset[0], -offset[1])
+        c, s = np.cos(angle), np.sin(angle)
+        if angle == 0:
+            for index in self.selected_data:
+                self._data_view.scale(index, scale, center=self._fixed_vertex)
+            self._scale_box(scale, center=self._fixed_vertex)
+        else:
+            rotation = np.array([[c, s], [-s, c]])
+            scale_mat = np.array([[scale[0], 0], [0, scale[1]]])
+            inv_rot = np.array([[c, -s], [s, c]])
+            transform = rotation @ scale_mat @ inv_rot
+            for index in self.selected_data:
+                self._data_view.shift(index, -self._fixed_vertex)
+                self._data_view.transform(index, transform)
+                self._data_view.shift(index, self._fixed_vertex)
+            self._transform_box(transform, center=self._fixed_vertex)
+        self.refresh()
+
+    def _rotate_object(self, coord):
+        handle = self._selected_box[Box.HANDLE]
+        if self._drag_start is None:
+            self._fixed_vertex = self._selected_box[Box.CENTER]
+            offset = handle - self._fixed_vertex
+            self._drag_start = -np.degrees(np.arctan2(offset[0], -offset[1]))
+
+        new_offset = coord - self._fixed_vertex
+        new_angle = -np.degrees(np.arctan2(new_offset[0], -new_offset[1]))
+        fixed_offset = handle - self._fixed_vertex
+        fixed_angle = -np.degrees(
+            np.arctan2(fixed_offset[0], -fixed_offset[1])
+        )
+
+        if np.linalg.norm(new_offset) < 1:
+            angle = 0
+        elif self._fixed_aspect:
+            angle = np.round(new_angle / 45) * 45 - fixed_angle
+        else:
+            angle = new_angle - fixed_angle
+
+        for index in self.selected_data:
+            self._data_view.rotate(index, angle, center=self._fixed_vertex)
+        self._rotate_box(angle, center=self._fixed_vertex)
+        self.refresh()
 
     def to_xml_list(self):
         """Convert the shapes to a list of svg xml elements.
@@ -1414,6 +1405,10 @@ class Shapes(Layer):
 
         return labels
 
+    @property
+    def coord(self):
+        return [self.coordinates[i] for i in self.dims.displayed]
+
     def on_mouse_press(self, event):
         """Called whenever mouse pressed in canvas.
 
@@ -1422,209 +1417,21 @@ class Shapes(Layer):
         event : Event
             Vispy event
         """
-        coord = [self.coordinates[i] for i in self.dims.displayed]
-        shift = 'Shift' in event.modifiers
-
         if self._mode == Mode.PAN_ZOOM:
             # If in pan/zoom mode do nothing
             pass
         elif self._mode in [Mode.SELECT, Mode.DIRECT]:
-            if not self._is_moving and not self._is_selecting:
-                self._moving_value = copy(self._value)
-                if self._value[1] is None:
-                    if shift and self._value[0] is not None:
-                        if self._value[0] in self.selected_data:
-                            self.selected_data.remove(self._value[0])
-                            shapes = self.selected_data
-                            self._selected_box = self.interaction_box(shapes)
-                        else:
-                            self.selected_data.append(self._value[0])
-                            shapes = self.selected_data
-                            self._selected_box = self.interaction_box(shapes)
-                    elif self._value[0] is not None:
-                        if self._value[0] not in self.selected_data:
-                            self.selected_data = [self._value[0]]
-                    else:
-                        self.selected_data = []
-                self._set_highlight()
+            self._select_direct_press(event)
         elif self._mode in (
             [Mode.ADD_RECTANGLE, Mode.ADD_ELLIPSE, Mode.ADD_LINE]
         ):
-            # Start drawing a rectangle / ellipse / line
-            size = self._vertex_size * self.scale_factor / 4
-            corner = np.array(coord)
-            if self._mode == Mode.ADD_RECTANGLE:
-                data = np.array(
-                    [
-                        corner,
-                        corner + [size, 0],
-                        corner + size,
-                        corner + [0, size],
-                    ]
-                )
-                shape_type = 'rectangle'
-            elif self._mode == Mode.ADD_ELLIPSE:
-                data = np.array(
-                    [
-                        corner,
-                        corner + [size, 0],
-                        corner + size,
-                        corner + [0, size],
-                    ]
-                )
-                shape_type = 'ellipse'
-            elif self._mode == Mode.ADD_LINE:
-                data = np.array([corner, corner + size])
-                shape_type = 'line'
-            data_full = self.expand_shape(data)
-            self.add(data_full, shape_type=shape_type)
-            self.selected_data = [self.nshapes - 1]
-            self._value = (self.selected_data[0], 4)
-            self._moving_value = copy(self._value)
-            self._is_creating = True
-            self.refresh()
+            self._add_rectangle_ellipse_line()
         elif self._mode in [Mode.ADD_PATH, Mode.ADD_POLYGON]:
-            if self._is_creating is False:
-                # Start drawing a path
-                data = np.array([coord, coord])
-                data_full = self.expand_shape(data)
-                self.add(data_full, shape_type='path')
-                self.selected_data = [self.nshapes - 1]
-                self._value = (self.selected_data[0], 1)
-                self._moving_value = copy(self._value)
-                self._is_creating = True
-                self._set_highlight()
-            else:
-                # Add to an existing path or polygon
-                index = self._moving_value[0]
-                if self._mode == Mode.ADD_POLYGON:
-                    new_type = Polygon
-                else:
-                    new_type = None
-                vertices = self._data_view.displayed_vertices[
-                    self._data_view.displayed_index == index
-                ]
-                vertices = np.concatenate((vertices, [coord]), axis=0)
-                # Change the selected vertex
-                self._value = (self._value[0], self._value[1] + 1)
-                self._moving_value = copy(self._value)
-                data_full = self.expand_shape(vertices)
-                self._data_view.edit(index, data_full, new_type=new_type)
-                self._selected_box = self.interaction_box(self.selected_data)
+            self._add_path_polygon()
         elif self._mode == Mode.VERTEX_INSERT:
-            if len(self.selected_data) == 0:
-                # If none selected return immediately
-                return
-
-            all_lines = np.empty((0, 2, 2))
-            all_lines_shape = np.empty((0, 2), dtype=int)
-            for index in self.selected_data:
-                shape_type = type(self._data_view.shapes[index])
-                if shape_type == Ellipse:
-                    # Adding vertex to ellipse not implemented
-                    pass
-                else:
-                    vertices = self._data_view.displayed_vertices[
-                        self._data_view.displayed_index == index
-                    ]
-                    # Find which edge new vertex should inserted along
-                    closed = shape_type != Path
-                    n = len(vertices)
-                    if closed:
-                        lines = np.array(
-                            [
-                                [vertices[i], vertices[(i + 1) % n]]
-                                for i in range(n)
-                            ]
-                        )
-                    else:
-                        lines = np.array(
-                            [
-                                [vertices[i], vertices[i + 1]]
-                                for i in range(n - 1)
-                            ]
-                        )
-                    all_lines = np.append(all_lines, lines, axis=0)
-                    indices = np.array(
-                        [np.repeat(index, len(lines)), list(range(len(lines)))]
-                    ).T
-                    all_lines_shape = np.append(
-                        all_lines_shape, indices, axis=0
-                    )
-            if len(all_lines) == 0:
-                # No appropriate shapes found
-                return
-            ind, loc = point_to_lines(coord, all_lines)
-            index = all_lines_shape[ind][0]
-            ind = all_lines_shape[ind][1] + 1
-            shape_type = type(self._data_view.shapes[index])
-            if shape_type == Line:
-                # Adding vertex to line turns it into a path
-                new_type = Path
-            elif shape_type == Rectangle:
-                # Adding vertex to rectangle turns it into a polygon
-                new_type = Polygon
-            else:
-                new_type = None
-            closed = shape_type != Path
-            vertices = self._data_view.displayed_vertices[
-                self._data_view.displayed_index == index
-            ]
-            if closed is not True:
-                if int(ind) == 1 and loc < 0:
-                    ind = 0
-                elif int(ind) == len(vertices) - 1 and loc > 1:
-                    ind = ind + 1
-
-            vertices = np.insert(vertices, ind, [coord], axis=0)
-            with self.events.set_data.blocker():
-                data_full = self.expand_shape(vertices)
-                self._data_view.edit(index, data_full, new_type=new_type)
-                self._selected_box = self.interaction_box(self.selected_data)
-            self.refresh()
+            self._insert_vertex()
         elif self._mode == Mode.VERTEX_REMOVE:
-            if self._value[1] is not None:
-                # have clicked on a current vertex so remove
-                index = self._value[0]
-                shape_type = type(self._data_view.shapes[index])
-                if shape_type == Ellipse:
-                    # Removing vertex from ellipse not implemented
-                    return
-                vertices = self._data_view.displayed_vertices[
-                    self._data_view.displayed_index == index
-                ]
-                if len(vertices) <= 2:
-                    # If only 2 vertices present, remove whole shape
-                    with self.events.set_data.blocker():
-                        if index in self.selected_data:
-                            self.selected_data.remove(index)
-                        self._data_view.remove(index)
-                        shapes = self.selected_data
-                        self._selected_box = self.interaction_box(shapes)
-                elif shape_type == Polygon and len(vertices) == 3:
-                    # If only 3 vertices of a polygon present remove
-                    with self.events.set_data.blocker():
-                        if index in self.selected_data:
-                            self.selected_data.remove(index)
-                        self._data_view.remove(index)
-                        shapes = self.selected_data
-                        self._selected_box = self.interaction_box(shapes)
-                else:
-                    if shape_type == Rectangle:
-                        # Deleting vertex from a rectangle creates a polygon
-                        new_type = Polygon
-                    else:
-                        new_type = None
-                    # Remove clicked on vertex
-                    vertices = np.delete(vertices, self._value[1], axis=0)
-                    with self.events.set_data.blocker():
-                        data_full = self.expand_shape(vertices)
-                        self._data_view.edit(
-                            index, data_full, new_type=new_type
-                        )
-                        shapes = self.selected_data
-                        self._selected_box = self.interaction_box(shapes)
-                self.refresh()
+            self._remove_vertex()
         else:
             raise ValueError("Mode not recongnized")
 
@@ -1636,7 +1443,7 @@ class Shapes(Layer):
         event : Event
             Vispy event
         """
-        coord = [self.coordinates[i] for i in self.dims.displayed]
+        coord = self.coord
 
         if self._mode == Mode.PAN_ZOOM:
             # If in pan/zoom mode just pass
@@ -1746,3 +1553,192 @@ class Shapes(Layer):
             pass
         else:
             raise ValueError("Mode not recongnized")
+
+    def _select_direct_press(self, event):
+        shift = 'Shift' in event.modifiers
+
+        if not self._is_moving and not self._is_selecting:
+            self._moving_value = copy(self._value)
+            if self._value[1] is None:
+                if shift and self._value[0] is not None:
+                    if self._value[0] in self.selected_data:
+                        self.selected_data.remove(self._value[0])
+                        shapes = self.selected_data
+                        self._selected_box = self.interaction_box(shapes)
+                    else:
+                        self.selected_data.append(self._value[0])
+                        shapes = self.selected_data
+                        self._selected_box = self.interaction_box(shapes)
+                elif self._value[0] is not None:
+                    if self._value[0] not in self.selected_data:
+                        self.selected_data = [self._value[0]]
+                else:
+                    self.selected_data = []
+            self._set_highlight()
+
+    def _add_rectangle_ellipse_line(self):
+        # Start drawing a rectangle / ellipse / line
+        size = self._vertex_size * self.scale_factor / 4
+        corner = np.array(self.coord)
+        if self._mode == Mode.ADD_RECTANGLE:
+            data = np.array(
+                [corner, corner + [size, 0], corner + size, corner + [0, size]]
+            )
+            shape_type = 'rectangle'
+        elif self._mode == Mode.ADD_ELLIPSE:
+            data = np.array(
+                [corner, corner + [size, 0], corner + size, corner + [0, size]]
+            )
+            shape_type = 'ellipse'
+        elif self._mode == Mode.ADD_LINE:
+            data = np.array([corner, corner + size])
+            shape_type = 'line'
+        data_full = self.expand_shape(data)
+        self.add(data_full, shape_type=shape_type)
+        self.selected_data = [self.nshapes - 1]
+        self._value = (self.selected_data[0], 4)
+        self._moving_value = copy(self._value)
+        self._is_creating = True
+        self.refresh()
+
+    def _add_path_polygon(self):
+        coord = self.coord
+        if self._is_creating is False:
+            # Start drawing a path
+            data = np.array([coord, coord])
+            data_full = self.expand_shape(data)
+            self.add(data_full, shape_type='path')
+            self.selected_data = [self.nshapes - 1]
+            self._value = (self.selected_data[0], 1)
+            self._moving_value = copy(self._value)
+            self._is_creating = True
+            self._set_highlight()
+        else:
+            # Add to an existing path or polygon
+            index = self._moving_value[0]
+            if self._mode == Mode.ADD_POLYGON:
+                new_type = Polygon
+            else:
+                new_type = None
+            vertices = self._data_view.displayed_vertices[
+                self._data_view.displayed_index == index
+            ]
+            vertices = np.concatenate((vertices, [coord]), axis=0)
+            # Change the selected vertex
+            self._value = (self._value[0], self._value[1] + 1)
+            self._moving_value = copy(self._value)
+            data_full = self.expand_shape(vertices)
+            self._data_view.edit(index, data_full, new_type=new_type)
+            self._selected_box = self.interaction_box(self.selected_data)
+
+    def _insert_vertex(self):
+        if len(self.selected_data) == 0:
+            # If none selected return immediately
+            return
+
+        coord = self.coord
+        all_lines = np.empty((0, 2, 2))
+        all_lines_shape = np.empty((0, 2), dtype=int)
+        for index in self.selected_data:
+            shape_type = type(self._data_view.shapes[index])
+            if shape_type == Ellipse:
+                # Adding vertex to ellipse not implemented
+                pass
+            else:
+                vertices = self._data_view.displayed_vertices[
+                    self._data_view.displayed_index == index
+                ]
+                # Find which edge new vertex should inserted along
+                closed = shape_type != Path
+                n = len(vertices)
+                if closed:
+                    lines = np.array(
+                        [
+                            [vertices[i], vertices[(i + 1) % n]]
+                            for i in range(n)
+                        ]
+                    )
+                else:
+                    lines = np.array(
+                        [[vertices[i], vertices[i + 1]] for i in range(n - 1)]
+                    )
+                all_lines = np.append(all_lines, lines, axis=0)
+                indices = np.array(
+                    [np.repeat(index, len(lines)), list(range(len(lines)))]
+                ).T
+                all_lines_shape = np.append(all_lines_shape, indices, axis=0)
+        if len(all_lines) == 0:
+            # No appropriate shapes found
+            return
+        ind, loc = point_to_lines(coord, all_lines)
+        index = all_lines_shape[ind][0]
+        ind = all_lines_shape[ind][1] + 1
+        shape_type = type(self._data_view.shapes[index])
+        if shape_type == Line:
+            # Adding vertex to line turns it into a path
+            new_type = Path
+        elif shape_type == Rectangle:
+            # Adding vertex to rectangle turns it into a polygon
+            new_type = Polygon
+        else:
+            new_type = None
+        closed = shape_type != Path
+        vertices = self._data_view.displayed_vertices[
+            self._data_view.displayed_index == index
+        ]
+        if closed is not True:
+            if int(ind) == 1 and loc < 0:
+                ind = 0
+            elif int(ind) == len(vertices) - 1 and loc > 1:
+                ind = ind + 1
+
+        vertices = np.insert(vertices, ind, [coord], axis=0)
+        with self.events.set_data.blocker():
+            data_full = self.expand_shape(vertices)
+            self._data_view.edit(index, data_full, new_type=new_type)
+            self._selected_box = self.interaction_box(self.selected_data)
+        self.refresh()
+
+    def _remove_vertex(self):
+        if self._value[1] is None:
+            return
+
+        # have clicked on a current vertex so remove
+        index = self._value[0]
+        shape_type = type(self._data_view.shapes[index])
+        if shape_type == Ellipse:
+            # Removing vertex from ellipse not implemented
+            return
+        vertices = self._data_view.displayed_vertices[
+            self._data_view.displayed_index == index
+        ]
+        if len(vertices) <= 2:
+            # If only 2 vertices present, remove whole shape
+            with self.events.set_data.blocker():
+                if index in self.selected_data:
+                    self.selected_data.remove(index)
+                self._data_view.remove(index)
+                shapes = self.selected_data
+                self._selected_box = self.interaction_box(shapes)
+        elif shape_type == Polygon and len(vertices) == 3:
+            # If only 3 vertices of a polygon present remove
+            with self.events.set_data.blocker():
+                if index in self.selected_data:
+                    self.selected_data.remove(index)
+                self._data_view.remove(index)
+                shapes = self.selected_data
+                self._selected_box = self.interaction_box(shapes)
+        else:
+            if shape_type == Rectangle:
+                # Deleting vertex from a rectangle creates a polygon
+                new_type = Polygon
+            else:
+                new_type = None
+            # Remove clicked on vertex
+            vertices = np.delete(vertices, self._value[1], axis=0)
+            with self.events.set_data.blocker():
+                data_full = self.expand_shape(vertices)
+                self._data_view.edit(index, data_full, new_type=new_type)
+                shapes = self.selected_data
+                self._selected_box = self.interaction_box(shapes)
+        self.refresh()
