@@ -44,7 +44,7 @@ task:
     - only_if: $CIRRUS_PR != ""
       env:
         PY_VER: "3.8"
-    - only_if: $CIRRUS == "linux"
+    - only_if: $OS == "linux"
       env:
         matrix:
           PY_VER: "3.6"
