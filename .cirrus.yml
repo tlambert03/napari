@@ -33,9 +33,9 @@ task:
   auto_cancellation: true
 
   matrix:
-    env:
-      matrix:
-        PY_VER: "3.8"
+    - env:
+        matrix:
+          PY_VER: "3.8"
     - only_if: $CIRRUS_OS == "linux"
       env:
         matrix:
