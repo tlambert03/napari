@@ -9,7 +9,7 @@ task:
   name: Black Formatting
 
   install_script:
-    - python3 -m pip install --retries 3 --upgrade pip
+    - python -m pip install --retries 3 --upgrade pip
     - pip install `cat requirements/development.txt | grep black`
 
   test_script:
@@ -22,7 +22,7 @@ task:
   name: Flake8 Linting
 
   install_script:
-    - python3 -m pip install --retries 3 --upgrade pip
+    - python -m pip install --retries 3 --upgrade pip
     - pip install `cat requirements/development.txt | grep flake8`
 
   test_script:
@@ -34,7 +34,7 @@ task:
 
   matrix:
     # not a pull request, or is linux: run full suite
-    - only_if: $CIRRUS_PR == "" || $CIRRUS_OS == "linux"
+    - only_if: $CIRRUS_PR == "" || $OS == 'linux'
       env:
         matrix:
           PY_VER: "3.6"
@@ -75,7 +75,7 @@ task:
 
     - name: macos ${PY_VER}
       osx_instance:
-        image: mojave-xcode-11.3
+        image: catalina-xcode
       env:
         PATH: $HOME/conda/bin:$PATH
       conda_script:
@@ -124,13 +124,13 @@ task:
     - pip install --retries 3 -r requirements.txt
     - python setup.py develop
 
-  check_script: python3 -c "import napari; print(napari.__version__)"
+  check_script: python -c "import napari; print(napari.__version__)"
 
   test_pyside2_script:
     - pytest -v
 
   test_pyqt5_script: |
-    if [ $OS != "linux" ]; then
+    if [ $OS == "linux" ]; then
       pip uninstall -y pyside2
       pip install pyqt5
       pytest -v
