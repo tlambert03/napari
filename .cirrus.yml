@@ -9,6 +9,8 @@ lint_task:
   install_script:
     - python -m pip install --retries 3 --upgrade pip
     - pip install `cat requirements/development.txt | grep black`
+    - pip install `cat requirements/development.txt | grep flake8`
+
   black_script: black --check .
   flake8_script: flake8 napari
 
