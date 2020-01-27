@@ -115,7 +115,7 @@ mac_task:
 
   check_script: python -c "import napari; print(napari.__version__)"
 
-  test_pyside2_script: pytest -v
+  test_script: pytest -v
 
 
 win_task:
@@ -176,7 +176,7 @@ win_task:
 
   check_script: python -c "import napari; print(napari.__version__)"
 
-  test_: pytest -v -o qt_no_exception_capture=1
+  test_script: pytest -v -o qt_no_exception_capture=1
 
 
 codecov_task:
