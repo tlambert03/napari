@@ -34,7 +34,13 @@ task:
 
   matrix:
     # not a pull request, or is linux: run full suite
-    - only_if: $CIRRUS_PR == "" || $OS == 'linux'
+    - only_if: $CIRRUS == "linux"
+      env:
+        matrix:
+          PY_VER: "3.6"
+          PY_VER: "3.7"
+          PY_VER: "3.8"
+    - only_if: $CIRRUS_PR == ""
       env:
         matrix:
           PY_VER: "3.6"
