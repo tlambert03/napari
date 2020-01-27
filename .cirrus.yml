@@ -33,12 +33,22 @@ task:
   auto_cancellation: true
 
   matrix:
-    # not a pull request: run full suite
     env:
       matrix:
-        PY_VER: "3.6"
-        PY_VER: "3.7"
         PY_VER: "3.8"
+    - only_if: $CIRRUS_OS == "linux"
+      env:
+        matrix:
+          PY_VER: "3.6"
+          PY_VER: "3.7"
+          PY_VER: "3.8"
+    # not a pull request: run full suite
+    - only_if: $CIRRUS_PR == ""
+      env:
+        matrix:
+          PY_VER: "3.6"
+          PY_VER: "3.7"
+          PY_VER: "3.8"
 
   matrix:
     - name: linux ${PY_VER}
