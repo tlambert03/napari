@@ -46,10 +46,6 @@ task:
           PY_VER: "3.6"
           PY_VER: "3.7"
           PY_VER: "3.8"
-    # is a pull request, only run python 3.8
-    - only_if: $CIRRUS_PR != ""
-      env:
-        PY_VER: "3.8"
 
   matrix:
     - name: linux ${PY_VER}
