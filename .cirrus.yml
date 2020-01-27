@@ -3,30 +3,14 @@ container:
   image: python:3.8
 
 
-task:
+lint_task:
   auto_cancellation: true
-
-  name: Black Formatting
-
+  name: linting & formatting
   install_script:
     - python -m pip install --retries 3 --upgrade pip
     - pip install `cat requirements/development.txt | grep black`
-
-  test_script:
-    - black --check .
-
-
-task:
-  auto_cancellation: true
-
-  name: Flake8 Linting
-
-  install_script:
-    - python -m pip install --retries 3 --upgrade pip
-    - pip install `cat requirements/development.txt | grep flake8`
-
-  test_script:
-    - flake8 napari
+  black_script: black --check .
+  flake8_script: flake8 napari
 
 
 linux_task:
@@ -65,6 +49,12 @@ linux_task:
   # https://pytest-qt.readthedocs.io/en/latest/troubleshooting.html#xvfb-assertionerror-timeouterror-when-using-waituntil-waitexposed-and-ui-events
   herbstluftwm_start_background_script: herbstluftwm
 
+  pip_cache:
+      folder: ~/.cache/pip
+      populate_script: 
+        - python -m pip install --retries 3 --upgrade pip
+        - pip install --retries 3 -r requirements.txt
+
   install_script:
     - python -m pip install --retries 3 --upgrade pip
     - pip install --retries 3 -r requirements.txt
@@ -72,30 +62,28 @@ linux_task:
 
   check_script: python -c "import napari; print(napari.__version__)"
 
-  test_pyside2_script:
+  test_pyside2_script: pytest -v
+
+  test_pyqt5_script:
+    - pip uninstall -y pyside2
+    - pip install pyqt5
     - pytest -v
 
-  test_pyqt5_script: |
-    pip uninstall -y pyside2
-    pip install pyqt5
-    pytest -v
 
-
-task:
+macwin_task:
   auto_cancellation: true
 
   matrix:
-    # not a pull request, or is linux: run full suite
+    # not a pull request: run full suite
     - only_if: $CIRRUS_PR == ""
       env:
         matrix:
           PY_VER: "3.6"
           PY_VER: "3.7"
-          PY_VER: "3.8"
     # is a pull request, only run python 3.8
     - only_if: $CIRRUS_PR != ""
       env:
-        PY_VER: "3.8"
+        PY_VER: "3.7"
 
   matrix:
     - name: macos ${PY_VER}
@@ -103,6 +91,7 @@ task:
         image: catalina-xcode
       env:
         PATH: $HOME/conda/bin:$PATH
+        PIP_FOLDER: $HOME/Library/Caches/pip
       conda_script:
         - curl https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh > install.sh
         - bash install.sh -b -p $HOME/conda
@@ -113,11 +102,9 @@ task:
         - rm install.sh
     
     - name: windows ${PY_VER}
-
       windows_container:
         image: cirrusci/windowsservercore:cmake
         os_version: 2019
-
       env:
         ANACONDA_LOCATION: $USERPROFILE\anaconda
         PATH: $ANACONDA_LOCATION\Scripts;$ANACONDA_LOCATION;$PATH
@@ -127,6 +114,7 @@ task:
         # https://github.com/vispy/vispy/blob/v0.5.3/appveyor.yml#L44
         VISPY_GL_LIB: $CIRRUS_WORKING_DIR\opengl32.dll
         PYTHON_ARCH: 64
+        PIP_FOLDER: $LOCALAPPDATA\pip\Cache
 
       system_script:
         # install OpenSSL
@@ -144,6 +132,12 @@ task:
         - conda install -y python=%PY_VER%
         - pip install setuptools-scm
 
+  pip_cache:
+      folder: $PIP_FOLDER
+      populate_script: 
+        - python -m pip install --retries 3 --upgrade pip
+        - pip install -r requirements.txt
+
   install_script:
     - python -m pip install --retries 3 --upgrade pip
     - pip install --retries 3 -r requirements.txt
@@ -151,8 +145,7 @@ task:
 
   check_script: python -c "import napari; print(napari.__version__)"
 
-  test_pyside2_script:
-    - pytest -v
+  test_pyside2_script: pytest -v
 
 
 codecov_task:
@@ -161,7 +154,7 @@ codecov_task:
   depends_on:
     - linux 3.8
     - macos 3.8
-    - windows 3.8
+    - windows 3.7
 
   env:
     CODECOV_TOKEN: ENCRYPTED[be41b51dac12576cfe9889ddd604d1f9db97cee5db0d98f7241fc8d5adf8d23da1135cd67e20b2ecec4005ac03083286]
@@ -186,7 +179,7 @@ codecov_task:
     codecov
 
 
-push_docs_task:
+docs_task:
   auto_cancellation: true
 
   only_if: $CIRRUS_BRANCH == "master"
