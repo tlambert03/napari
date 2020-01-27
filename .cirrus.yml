@@ -133,6 +133,7 @@ macwin_task:
         - conda install -yn base conda=4.8.1
         - conda install -y python=%PY_VER%
         - pip install setuptools-scm
+        
 
   pip_cache:
       folder: $PIP_FOLDER
@@ -147,8 +148,12 @@ macwin_task:
 
   check_script: python -c "import napari; print(napari.__version__)"
 
-  test_pyside2_script: pytest -v
-
+  test_pyside2_script: |
+    if [[ $OS == "windows" ]]; then
+      pytest -v -o qt_no_exception_capture=1
+    else
+      pytest -v
+    fi
 
 codecov_task:
   auto_cancellation: true
