@@ -33,8 +33,8 @@ task:
   auto_cancellation: true
 
   matrix:
-    # not a pull request, run full suite
-    - only_if: $CIRRUS_PR == ""
+    # not a pull request, or is linux: run full suite
+    - only_if: $CIRRUS_PR == "" || CIRRUS_OS == "linux"
       env:
         matrix:
           PY_VER: "3.6"
@@ -83,7 +83,7 @@ task:
         - bash install.sh -b -p $HOME/conda
         # https://github.com/napari/napari/pull/594#issuecomment-542475164
         - conda install --yes -c conda-forge setuptools
-        - conda update -yn base conda=4.8.1
+        - conda install -yn base conda=4.8.1
         - conda install -y python=$PY_VER
         - rm install.sh
     
@@ -115,7 +115,7 @@ task:
         - choco install -y miniconda3 --params="'/D:%ANACONDA_LOCATION%'"
         # https://github.com/napari/napari/pull/594#issuecomment-542475164
         - conda install --yes -c conda-forge setuptools
-        - conda update -yn base conda=4.8.1
+        - conda install -yn base conda=4.8.1
         - conda install -y python=%PY_VER%
         - pip install setuptools-scm
 
