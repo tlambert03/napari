@@ -64,7 +64,7 @@ task:
         - bash install.sh -b -p $HOME/conda
         # https://github.com/napari/napari/pull/594#issuecomment-542475164
         - conda install --yes -c conda-forge setuptools
-        - conda update -yn base conda
+        - conda install -yn base conda=4.8.1
         - conda install -y python=$PY_VER
         - rm install.sh
 
@@ -83,7 +83,7 @@ task:
         - bash install.sh -b -p $HOME/conda
         # https://github.com/napari/napari/pull/594#issuecomment-542475164
         - conda install --yes -c conda-forge setuptools
-        - conda update -yn base conda
+        - conda update -yn base conda=4.8.1
         - conda install -y python=$PY_VER
         - rm install.sh
     
@@ -115,7 +115,7 @@ task:
         - choco install -y miniconda3 --params="'/D:%ANACONDA_LOCATION%'"
         # https://github.com/napari/napari/pull/594#issuecomment-542475164
         - conda install --yes -c conda-forge setuptools
-        - conda update -yn base conda
+        - conda update -yn base conda=4.8.1
         - conda install -y python=%PY_VER%
         - pip install setuptools-scm
 
