@@ -1,26 +1,17 @@
 mac_task:
   auto_cancellation: true
-
-  matrix:
-    env:
-      matrix:
-        CONDA_VER: "4.8.0"
-        CONDA_VER: "4.8.1"
-        CONDA_VER: "4.8.2"
-
-  name: macos 3.6 ${CONDA_VER}
+  name: macos 3.6 conda4.8.1
   osx_instance:
     image: catalina-xcode
-  env:
-    PATH: $HOME/conda/bin:$PATH
-    PY_VER: "3.6"
   conda_script:
+    - xcode-select -p
+    - clang --version
     - curl https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh > install.sh
     - bash install.sh -b -p $HOME/conda
     # https://github.com/napari/napari/pull/594#issuecomment-542475164
     - conda install --yes -c conda-forge setuptools
-    - conda install -yn base conda=$CONDA_VER
-    - conda install -y python=$PY_VER
+    - conda install -yn base conda=4.8.1
+    - conda install -y python=3.6
     - rm install.sh
 
   pip_cache:
@@ -31,33 +22,3 @@ mac_task:
 
   install_script: python setup.py develop
   check_script: python -c "import napari; print(napari.__version__)"
-
-
-mac2_task:
-  auto_cancellation: true
-
-  name: macos 3.6 update conda
-  osx_instance:
-    image: catalina-xcode
-  env:
-    PATH: $HOME/conda/bin:$PATH
-    PY_VER: "3.6"
-  conda_script:
-    - curl https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh > install.sh
-    - bash install.sh -b -p $HOME/conda
-    # https://github.com/napari/napari/pull/594#issuecomment-542475164
-    - conda install --yes -c conda-forge setuptools
-    - conda update -yn base conda
-    - conda install -y python=$PY_VER
-    - rm install.sh
-
-  pip_cache:
-    folder: $HOME/Library/Caches/pip
-    populate_script: 
-      - python -m pip install --retries 3 --upgrade pip
-      - pip install -r requirements.txt
-
-  install_script: python setup.py develop
-  check_script: python -c "import napari; print(napari.__version__)"
-
-
