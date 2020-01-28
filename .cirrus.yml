@@ -35,7 +35,7 @@ mac_task:
     - pip install --retries 3 -r requirements.txt
     - python setup.py develop
 
-  check_script: python -c "import napari; print(napari.__version__)"
+  check_script: python -c "import napari; import numpy; print(napari.__version__)"
 
   test_script: pytest -v
 
