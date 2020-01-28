@@ -15,8 +15,8 @@ mac_task:
     - conda install -y python=3.6
 
   pip_script:
-    - export CXXFLAGS="-stdlib=libc++"
-    - export CFLAGS="-stdlib=libc++"
+    # - export CXXFLAGS="-stdlib=libc++"
+    # - export CFLAGS="-stdlib=libc++"
     - export MACOSX_DEPLOYMENT_TARGET=10.10
     - python -m pip install --retries 3 --upgrade pip
     - pip install -r requirements.txt
