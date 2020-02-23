@@ -2,26 +2,15 @@ import numpy as np
 import pytest
 import napari
 
-from napari._tests.utils import (
-    check_viewer_functioning,
-    layer_test_data,
-    view_layer_type,
-)
+from napari._tests.utils import check_viewer_functioning, layer_test_data
 
 
 @pytest.mark.parametrize('layer_type, data, ndim', layer_test_data)
-def test_view(qtbot, layer_type, data, ndim):
+def test_view(viewermodel_factory, layer_type, data, ndim):
 
-    np.random.seed(0)
-    viewer = view_layer_type(layer_type, data)
-    view = viewer.window.qt_viewer
-    qtbot.addWidget(view)
-
+    view, viewer = viewermodel_factory()
+    getattr(viewer, f'add_{layer_type.__name__.lower()}')(data)
     check_viewer_functioning(viewer, view, data, ndim)
-
-    # Close the viewer
-    view.shutdown()
-    viewer.window.close()
 
 
 def test_view_multichannel(qtbot):
