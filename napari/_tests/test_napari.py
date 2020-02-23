@@ -20,6 +20,7 @@ def test_view(qtbot, layer_type, data, ndim):
     check_viewer_functioning(viewer, view, data, ndim)
 
     # Close the viewer
+    view.shutdown()
     viewer.window.close()
 
 
@@ -37,4 +38,5 @@ def test_view_multichannel(qtbot):
         assert np.all(viewer.layers[i].data == data.take(i, axis=-1))
 
     # Close the viewer
+    view.shutdown()
     viewer.window.close()
