@@ -219,10 +219,15 @@ def get_max_texture_sizes():
         Max texture size allowed by the vispy canvas during 2D rendering.
     """
     # A canvas must be created to access gl values
-    _ = Canvas(show=False)
-    MAX_TEXTURE_SIZE_2D = gl.glGetParameter(gl.GL_MAX_TEXTURE_SIZE)
+    c = Canvas(show=False)
+    try:
+        capabilities = c.context.shared.parser.capabilities
+        MAX_TEXTURE_SIZE_2D = capabilities['max_texture_size']
+    finally:
+        c.close()
     if MAX_TEXTURE_SIZE_2D == ():
         MAX_TEXTURE_SIZE_2D = None
+    print(c, MAX_TEXTURE_SIZE_2D, gl.glGetParameter(gl.GL_MAX_TEXTURE_SIZE))
     # vispy doesn't expose GL_MAX_3D_TEXTURE_SIZE so hard coding
     # MAX_TEXTURE_SIZE_3D = gl.glGetParameter(gl.GL_MAX_3D_TEXTURE_SIZE)
     # if MAX_TEXTURE_SIZE_3D == ():
