@@ -1,4 +1,3 @@
-from vispy.gloo import gl
 from vispy.app import Canvas
 from vispy.visuals.transforms import STTransform
 from abc import ABC, abstractmethod
@@ -227,7 +226,7 @@ def get_max_texture_sizes():
         c.close()
     if MAX_TEXTURE_SIZE_2D == ():
         MAX_TEXTURE_SIZE_2D = None
-    print(c, MAX_TEXTURE_SIZE_2D, gl.glGetParameter(gl.GL_MAX_TEXTURE_SIZE))
+    print(MAX_TEXTURE_SIZE_2D)
     # vispy doesn't expose GL_MAX_3D_TEXTURE_SIZE so hard coding
     # MAX_TEXTURE_SIZE_3D = gl.glGetParameter(gl.GL_MAX_3D_TEXTURE_SIZE)
     # if MAX_TEXTURE_SIZE_3D == ():

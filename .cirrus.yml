@@ -75,12 +75,12 @@ linux_task:
     - conda list
     - python -c "import napari; print(napari.__version__)"
 
-  test_pyside2_script: pytest napari/_vispy/ -v -s --disable-warnings
+  test_pyside2_script: pytest -v -s --disable-warnings
 
   test_pyqt5_script:
     - pip uninstall -y pyside2
     - pip install pyqt5
-    - pytest napari/_vispy/ -v -s --disable-warnings
+    - pytest -v -s --disable-warnings
 
 
 mac_task:
