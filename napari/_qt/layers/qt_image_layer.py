@@ -1,5 +1,5 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QComboBox, QLabel, QSlider
+from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QSlider
 
 from ...layers.image._constants import (
     ComplexRendering,
@@ -10,6 +10,37 @@ from .qt_image_base_layer import QtBaseImageControls
 
 
 class QtImageControls(QtBaseImageControls):
+    """Qt view and controls for the napari Image layer.
+
+    Parameters
+    ----------
+    layer : napari.layers.Image
+        An instance of a napari Image layer.
+
+    Attributes
+    ----------
+    attenuationSlider : qtpy.QtWidgets.QSlider
+        Slider controlling attenuation rate for `attenuated_mip` mode.
+    attenuationLabel : qtpy.QtWidgets.QLabel
+        Label for the attenuation slider widget.
+    grid_layout : qtpy.QtWidgets.QGridLayout
+        Layout of Qt widget controls for the layer.
+    interpComboBox : qtpy.QtWidgets.QComboBox
+        Dropdown menu to select the interpolation mode for image display.
+    interpLabel : qtpy.QtWidgets.QLabel
+        Label for the interpolation dropdown menu.
+    isoThresholdSlider : qtpy.QtWidgets.QSlider
+        Slider controlling the isosurface threshold value for rendering.
+    isoThresholdLabel : qtpy.QtWidgets.QLabel
+        Label for the isosurface threshold slider widget.
+    layer : napari.layers.Image
+        An instance of a napari Image layer.
+    renderComboBox : qtpy.QtWidgets.QComboBox
+        Dropdown menu to select the rendering mode for image display.
+    renderLabel : qtpy.QtWidgets.QLabel
+        Label for the rendering mode dropdown menu.
+    """
+
     def __init__(self, layer):
         super().__init__(layer)
 
@@ -23,7 +54,7 @@ class QtImageControls(QtBaseImageControls):
             self._on_complex_rendering_change
         )
 
-        interp_comboBox = QComboBox()
+        interp_comboBox = QComboBox(self)
         interp_comboBox.addItems(Interpolation.keys())
         index = interp_comboBox.findText(
             self.layer.interpolation, Qt.MatchFixedString
@@ -33,7 +64,7 @@ class QtImageControls(QtBaseImageControls):
         self.interpComboBox = interp_comboBox
         self.interpLabel = QLabel('interpolation:')
 
-        renderComboBox = QComboBox()
+        renderComboBox = QComboBox(self)
         renderComboBox.addItems(Rendering.keys())
         index = renderComboBox.findText(
             self.layer.rendering, Qt.MatchFixedString
@@ -43,7 +74,7 @@ class QtImageControls(QtBaseImageControls):
         self.renderComboBox = renderComboBox
         self.renderLabel = QLabel('rendering:')
 
-        sld = QSlider(Qt.Horizontal)
+        sld = QSlider(Qt.Horizontal, parent=self)
         sld.setFocusPolicy(Qt.NoFocus)
         sld.setMinimum(0)
         sld.setMaximum(100)
@@ -53,7 +84,7 @@ class QtImageControls(QtBaseImageControls):
         self.isoThresholdSlider = sld
         self.isoThresholdLabel = QLabel('iso threshold:')
 
-        sld = QSlider(Qt.Horizontal)
+        sld = QSlider(Qt.Horizontal, parent=self)
         sld.setFocusPolicy(Qt.NoFocus)
         sld.setMinimum(0)
         sld.setMaximum(200)
@@ -62,56 +93,98 @@ class QtImageControls(QtBaseImageControls):
         sld.valueChanged.connect(self.changeAttenuation)
         self.attenuationSlider = sld
         self.attenuationLabel = QLabel('attenuation:')
-        self._on_ndisplay_change()
-
-        # complex value combo
-        comboBox = QComboBox()
-        comboBox.addItems(ComplexRendering.lower_members())
-        comboBox.currentTextChanged.connect(self.changeComplex)
-        self.complexComboBox = comboBox
-        self.complexLabel = QLabel('complex:')
-
-        self._on_ndisplay_change()
-        self._on_data_change()
 
         self.contrastLimitsLabel = QLabel('contrast limits:')
         self.gammaLabel = QLabel('gamma:')
 
+        # complex value combo
+        self.complexLabel = QLabel('complex:')
+        self.complexComboBox = QComboBox()
+        self.complexComboBox.addItems(ComplexRendering.lower_members())
+        self.complexComboBox.currentTextChanged.connect(self.changeComplex)
+
+        colormap_layout = QHBoxLayout()
+        colormap_layout.addWidget(self.colorbarLabel)
+        colormap_layout.addWidget(self.colormapComboBox)
+        colormap_layout.addStretch(1)
+
+        self._on_ndisplay_change()
+        self._on_data_change()
+
         # grid_layout created in QtLayerControls
         # addWidget(widget, row, column, [row_span, column_span])
         self.grid_layout.addWidget(QLabel('opacity:'), 0, 0)
-        self.grid_layout.addWidget(self.opacitySlider, 0, 1, 1, 2)
+        self.grid_layout.addWidget(self.opacitySlider, 0, 1)
         self.grid_layout.addWidget(self.contrastLimitsLabel, 1, 0)
-        self.grid_layout.addWidget(self.contrastLimitsSlider, 1, 1, 1, 2)
+        self.grid_layout.addWidget(self.contrastLimitsSlider, 1, 1)
         self.grid_layout.addWidget(self.gammaLabel, 2, 0)
-        self.grid_layout.addWidget(self.gammaSlider, 2, 1, 1, 2)
-        self.grid_layout.addWidget(self.isoThresholdLabel, 3, 0)
-        self.grid_layout.addWidget(self.isoThresholdSlider, 3, 1, 1, 2)
-        self.grid_layout.addWidget(self.attenuationLabel, 3, 0)
-        self.grid_layout.addWidget(self.attenuationSlider, 3, 1, 1, 2)
-        self.grid_layout.addWidget(QLabel('colormap:'), 4, 0)
-        self.grid_layout.addWidget(self.colormapComboBox, 4, 2)
-        self.grid_layout.addWidget(self.colorbarLabel, 4, 1)
-        self.grid_layout.addWidget(QLabel('blending:'), 5, 0)
-        self.grid_layout.addWidget(self.blendComboBox, 5, 1, 1, 2)
-        self.grid_layout.addWidget(self.renderLabel, 6, 0)
-        self.grid_layout.addWidget(self.renderComboBox, 6, 1, 1, 2)
-        self.grid_layout.addWidget(self.interpLabel, 7, 0)
-        self.grid_layout.addWidget(self.interpComboBox, 7, 1, 1, 2)
-        self.grid_layout.addWidget(self.complexLabel, 8, 0)
-        self.grid_layout.addWidget(self.complexComboBox, 8, 1, 1, 2)
-        self.grid_layout.setRowStretch(8, 1)
+        self.grid_layout.addWidget(self.gammaSlider, 2, 1)
+        self.grid_layout.addWidget(QLabel('colormap:'), 3, 0)
+        self.grid_layout.addLayout(colormap_layout, 3, 1)
+        self.grid_layout.addWidget(QLabel('blending:'), 4, 0)
+        self.grid_layout.addWidget(self.blendComboBox, 4, 1)
+        self.grid_layout.addWidget(self.renderLabel, 5, 0)
+        self.grid_layout.addWidget(self.renderComboBox, 5, 1)
+        self.grid_layout.addWidget(self.interpLabel, 6, 0)
+        self.grid_layout.addWidget(self.interpComboBox, 6, 1)
+        self.grid_layout.addWidget(self.isoThresholdLabel, 7, 0)
+        self.grid_layout.addWidget(self.isoThresholdSlider, 7, 1)
+        self.grid_layout.addWidget(self.attenuationLabel, 8, 0)
+        self.grid_layout.addWidget(self.attenuationSlider, 8, 1)
+        self.grid_layout.addWidget(self.complexLabel, 9, 0)
+        self.grid_layout.addWidget(self.complexComboBox, 9, 1)
+        self.grid_layout.setRowStretch(10, 1)
         self.grid_layout.setColumnStretch(1, 1)
-        self.grid_layout.setVerticalSpacing(4)
+        self.grid_layout.setSpacing(4)
 
     def changeInterpolation(self, text):
+        """Change interpolation mode for image display.
+
+        Parameters
+        ----------
+        text : str
+            Interpolation mode used by vispy. Must be one of our supported
+            modes:
+            'bessel', 'bicubic', 'bilinear', 'blackman', 'catrom', 'gaussian',
+            'hamming', 'hanning', 'hermite', 'kaiser', 'lanczos', 'mitchell',
+            'nearest', 'spline16', 'spline36'
+        """
         self.layer.interpolation = text
 
     def changeRendering(self, text):
+        """Change rendering mode for image display.
+
+        Parameters
+        ----------
+        text : str
+            Rendering mode used by vispy.
+            Selects a preset rendering mode in vispy that determines how
+            volume is displayed:
+            * translucent: voxel colors are blended along the view ray until
+              the result is opaque.
+            * mip: maxiumum intensity projection. Cast a ray and display the
+              maximum value that was encountered.
+            * additive: voxel colors are added along the view ray until
+              the result is saturated.
+            * iso: isosurface. Cast a ray until a certain threshold is
+              encountered. At that location, lighning calculations are
+              performed to give the visual appearance of a surface.
+            * attenuated_mip: attenuated maxiumum intensity projection. Cast a
+              ray and attenuate values based on integral of encountered values,
+              display the maximum value that was encountered after attenuation.
+              This will make nearer objects appear more prominent.
+        """
         self.layer.rendering = text
         self._toggle_rendering_parameter_visbility()
 
     def changeIsoThreshold(self, value):
+        """Change isosurface threshold on the layer model.
+
+        Parameters
+        ----------
+        value : float
+            Threshold for isosurface.
+        """
         with self.layer.events.blocker(self._on_iso_threshold_change):
             self.layer.iso_threshold = value / 100
 
@@ -121,18 +194,46 @@ class QtImageControls(QtBaseImageControls):
             self.layer.complex_rendering = text
 
     def _on_iso_threshold_change(self, event):
+        """Receive layer model isosurface change event and update the slider.
+
+        Parameters
+        ----------
+        event : qtpy.QtCore.QEvent
+            Event from the Qt context.
+        """
         with self.layer.events.iso_threshold.blocker():
             self.isoThresholdSlider.setValue(self.layer.iso_threshold * 100)
 
     def changeAttenuation(self, value):
+        """Change attenuation rate for attenuated maximum intensity projection.
+
+        Parameters
+        ----------
+        value : Float
+            Attenuation rate for attenuated maximum intensity projection.
+        """
         with self.layer.events.blocker(self._on_attenuation_change):
             self.layer.attenuation = value / 100
 
     def _on_attenuation_change(self, event):
+        """Receive layer model attenuation change event and update the slider.
+
+        Parameters
+        ----------
+        event : qtpy.QtCore.QEvent
+            Event from the Qt context.
+        """
         with self.layer.events.attenuation.blocker():
             self.attenuationSlider.setValue(self.layer.attenuation * 100)
 
     def _on_interpolation_change(self, event):
+        """Receive layer interpolation change event and update dropdown menu.
+
+        Parameters
+        ----------
+        event : qtpy.QtCore.QEvent
+            Event from the Qt context.
+        """
         with self.layer.events.interpolation.blocker():
             index = self.interpComboBox.findText(
                 self.layer.interpolation, Qt.MatchFixedString
@@ -140,6 +241,13 @@ class QtImageControls(QtBaseImageControls):
             self.interpComboBox.setCurrentIndex(index)
 
     def _on_rendering_change(self, event):
+        """Receive layer model rendering change event and update dropdown menu.
+
+        Parameters
+        ----------
+        event : qtpy.QtCore.QEvent
+            Event from the Qt context.
+        """
         with self.layer.events.rendering.blocker():
             index = self.renderComboBox.findText(
                 self.layer.rendering, Qt.MatchFixedString
@@ -179,9 +287,8 @@ class QtImageControls(QtBaseImageControls):
             self.complexComboBox.setCurrentText(text)
 
     def _toggle_rendering_parameter_visbility(self):
-        rendering = self.layer.rendering
-        if isinstance(rendering, str):
-            rendering = Rendering(rendering)
+        """Hide isosurface rendering parameters if they aren't needed."""
+        rendering = Rendering(self.layer.rendering)
         if rendering == Rendering.ISO:
             self.isoThresholdSlider.show()
             self.isoThresholdLabel.show()
@@ -196,6 +303,13 @@ class QtImageControls(QtBaseImageControls):
             self.attenuationLabel.hide()
 
     def _on_ndisplay_change(self, event=None):
+        """Toggle between 2D and 3D visualization modes.
+
+        Parameters
+        ----------
+        event : qtpy.QtCore.QEvent, optional
+            Event from the Qt context, default is None.
+        """
         if self.layer.dims.ndisplay == 2:
             self.isoThresholdSlider.hide()
             self.isoThresholdLabel.hide()
