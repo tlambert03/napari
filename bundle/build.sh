@@ -11,7 +11,7 @@ echo "installing build tools..."
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # 3.5 works fine for PyQt5... but lots of issues with PySide2
-    pip install pyinstaller==3.4;
+    pip install pyinstaller==3.6;
 else
     # 3.5 seems to be required for PySide2 on linux, otherwise, in 3.4
     # it fails to find python in run-time hook 'pyi_rth_qt5plugins.py'
