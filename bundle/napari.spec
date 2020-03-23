@@ -108,7 +108,7 @@ print("HOOKS PATH:", HOOKSPATH)
 a = Analysis(
     [join(NAPARI_ROOT, '__main__.py')],
     # https://github.com/pypa/setuptools/issues/1963  # noqa
-    hiddenimports=['pkg_resources.py2_warn', 'pip'],
+    hiddenimports=['pkg_resources.py2_warn', 'importlib', 'napari.conftest'],
     pathex=[BUNDLE_ROOT],
     datas=DATA_FILES,
     hookspath=[HOOKSPATH],
