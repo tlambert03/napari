@@ -67,4 +67,14 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+
+    if len(sys.argv) > 1 and sys.argv[1] == "--pytest":
+        import pytest
+        import pytestqt
+        import pytest_ordering
+
+        sys.exit(
+            pytest.main(sys.argv[2:], plugins=[pytestqt, pytest_ordering])
+        )
+    else:
+        sys.exit(main())
