@@ -9,7 +9,10 @@ creating a napari plugin
 This document explains how to extend napari functionality by writing a plugin
 that can be installed with ``pip`` and autodetected by napari.  For in-depth
 information on how plugins are used internally in napari, see
-:ref:`plugins-for-napari-developers`.
+:ref:`plugins-for-napari-developers`.  If you'd like to follow along writing
+your own code as you read this, you may wish to use our :ref:`cookiecutter
+template <cookiecutter-plugin-template>` to auto-generate a basic napari plugin
+project that you can modify as needed.
 
 
 Overview
@@ -31,15 +34,16 @@ well-documented function signatures that define the API (or
 that we promise to call somewhere in the napari codebase.
 
 3. **Hook Implementations**: Plugin developers then write functions ("*hook
-implementations*") and mark that function as meeting the requirements of a
-specific *hook specification* offered by napari (using a decorator as
-:ref:`described below <hookimpl-decorator>`).
+implementations*") and mark them as meeting the requirements of a specific
+*hook specification* offered by napari by using a decorator as :ref:`described
+below <hookimpl-decorator>`.
 
-4. **Plugin discovery**: Using :ref:`one of two methods <hookimpl-decorator>`,
-plugins that are installed in the same python environment as napari can make
-themselves known to napari. ``napari`` will then scan plugin modules for *hook
-implementations* that will then be called at the appropriate time place during
-the execution of ``napari``.
+4. **Plugin discovery**: Plugins that are installed in the same python
+environment as napari can :ref:`make themselves known to napari
+<plugin-discovery>` using either a package-naming convention, or specific
+metadata in the ``setup.py`` file. ``napari`` will then scan plugin modules for
+*hook implementations* that will then be called at the appropriate time place
+during the execution of ``napari``.
 
 
 Step 1: Choose a hook specification to implement
@@ -247,6 +251,7 @@ functionality by simply installing your package along with napari:
 
    pip install napari mypackage
 
+.. _cookiecutter-plugin-template:
 
 Cookiecutter template
 ---------------------
