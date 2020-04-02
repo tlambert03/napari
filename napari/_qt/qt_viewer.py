@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from qtpy.QtCore import QCoreApplication, Qt, QSize
@@ -443,6 +444,17 @@ class QtViewer(QSplitter):
         dialog = QtAboutKeyBindings(self.viewer, parent=self)
         dialog.show()
 
+    def _show_docs_browser(self):
+        from qtpy import QtWebEngineWidgets
+
+        self.docs_browser = QtWebEngineWidgets.QWebEngineView()
+        url = os.path.abspath('docs/build/html/index.html')
+        if not os.path.isfile(url):
+            raise FileNotFoundError("Built in documentation not found.")
+        self.docs_browser.load("file://" + url.replace(' ', '%20'))
+        self.docs_browser.resize(960, 720)
+        self.docs_browser.show()
+
     def on_mouse_press(self, event):
         """Called whenever mouse pressed in canvas.
 
@@ -613,6 +625,10 @@ class QtViewer(QSplitter):
         self.canvas.native.deleteLater()
         if self._console is not None:
             self.console.close()
+
+        if hasattr(self, 'docs_browser'):
+            self.docs_browser.close()
+
         self.dockConsole.deleteLater()
         if not self.pool.waitForDone(10000):
             raise TimeoutError("Timed out waiting for QtViewer.pool to finish")

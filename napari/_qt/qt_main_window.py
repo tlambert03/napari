@@ -240,6 +240,11 @@ class Window:
         )
         self.help_menu.addAction(about_key_bindings)
 
+        show_docs_action = QAction("Documentation", self._qt_window)
+        show_docs_action.setStatusTip('read documentation')
+        show_docs_action.triggered.connect(self.qt_viewer._show_docs_browser)
+        self.help_menu.addAction(show_docs_action)
+
     def add_dock_widget(
         self,
         widget: QWidget,

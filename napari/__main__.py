@@ -6,6 +6,7 @@ import sys
 
 from . import __version__, gui_qt, view_path
 from .utils import citation_text, sys_info
+from qtpy import QtCore
 
 
 class InfoAction(argparse.Action):
@@ -61,6 +62,7 @@ def main():
         help='interpret all dimensions in the image as spatial',
     )
     args = parser.parse_args()
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     with gui_qt(startup_logo=True):
         view_path(args.images, stack=args.stack)
 
