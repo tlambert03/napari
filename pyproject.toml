@@ -22,9 +22,6 @@ exclude = '''
 )
 '''
 
-[build-system]
-requires = ["briefcase"]
-
 [tool.briefcase]
 project_name = "napari"
 bundle = "com.napari"
