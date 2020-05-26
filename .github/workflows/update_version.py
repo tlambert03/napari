@@ -15,7 +15,7 @@ with open(pyprjct, 'r') as f:
 
 doc = tomlkit.parse(content)
 doc['tool']['briefcase']['version'] = napari.__version__
-doc['tool']['briefcase']['requires'] = reqs + ["pip"]
+doc['tool']['briefcase']['app']['napari']['requires'] = reqs + ["pip"]
 
 print("patching pyroject.toml to version: ", napari.__version__)
 print("patching pyroject.toml requirements to : ", reqs + ["pip"])
