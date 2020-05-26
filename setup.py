@@ -10,7 +10,6 @@ import os.path as osp
 import sys
 from setuptools import find_packages, setup
 
-import versioneer
 
 MIN_PY_MAJOR_VER = 3
 MIN_PY_MINOR_VER = 6
@@ -90,8 +89,6 @@ setup(
     long_description=LONG_DESCRIPTION,
     license=LICENSE,
     download_url=DOWNLOAD_URL,
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     classifiers=CLASSIFIERS,
     install_requires=requirements,
     python_requires=f'>={MIN_PY_VER}',

@@ -1,10 +1,13 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "briefcase"]
+requires = ["setuptools>=42", "wheel", "briefcase", "setuptools_scm[toml]>=3.4"]
+
+[tool.setuptools_scm]
+write_to = "napari/_version.py"
 
 [tool.briefcase]
 project_name = "napari"
 bundle = "com.napari"
-version = "0.0.0"
+version = "0.0.0"  # dynamic
 author = "napari"
 url = "https://napari.org/"
 license = "BSD license"

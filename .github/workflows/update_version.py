@@ -1,16 +1,24 @@
 import tomlkit
 import os
-from napari import __version__
+import napari
 
 
-pyprjct = os.path.join(os.path.dirname(__file__), '..', '..', 'pyproject.toml')
+napari_root = os.path.dirname(napari.__file__)
+req_txt = os.path.join(napari_root, '..', 'requirements', 'default.txt')
+with open(req_txt) as f:
+    reqs = [l.split("#")[0].strip() for l in f if not l.startswith("#")]
+
+pyprjct = os.path.join(napari_root, '..', 'pyproject.toml')
 
 with open(pyprjct, 'r') as f:
     content = f.read()
 
 doc = tomlkit.parse(content)
-doc['tool']['briefcase']['version'] = __version__
-print("patching pyroject.toml to version: ", __version__)
+doc['tool']['briefcase']['version'] = napari.__version__
+doc['tool']['briefcase']['requires'] = reqs + ["pip"]
+
+print("patching pyroject.toml to version: ", napari.__version__)
+print("patching pyroject.toml requirements to : ", reqs + ["pip"])
 
 with open(pyprjct, 'w') as f:
     f.write(tomlkit.dumps(doc))
