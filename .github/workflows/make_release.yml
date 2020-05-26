@@ -22,7 +22,7 @@ jobs:
           python-version: 3.7
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools_scm
           pip install -r requirements.txt
       - name: Build Distribution
         run: |
