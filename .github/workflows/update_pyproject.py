@@ -1,3 +1,7 @@
+"""
+updates version and requirements in pyproject.toml briefcase settings
+"""
+
 import tomlkit
 import os
 import napari

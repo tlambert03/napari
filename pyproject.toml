@@ -7,7 +7,7 @@ write_to = "napari/_version.py"
 [tool.briefcase]
 project_name = "napari"
 bundle = "com.napari"
-version = "0.0.0"  # dynamic
+version = "0.0.0"  # populated with .github/workflows/update_version.py
 author = "napari"
 url = "https://napari.org/"
 license = "BSD license"
@@ -15,31 +15,7 @@ license = "BSD license"
 [tool.briefcase.app.napari]
 formal_name = "napari"
 description = "napari: a multi-dimensional image viewer"
-requires = [
-  'dask[array]>=2.1.0',
-  'cachey>=0.2.1',
-  'fsspec>=0.3.3',
-  'imageio>=2.5.0',
-  'Pillow!=7.1.0,!=7.1.1',
-  'ipykernel>=5.1.1',
-  'numpy>=1.10.0',
-  'qtpy>=1.7.0',
-  'qtconsole>=4.5.1',
-  'scipy>=1.2.0',
-  'vispy>=0.6.4',
-  'IPython>=7.7.0',
-  'backcall>=0.1.0',
-  'PyOpenGL>=3.1.0',
-  'wrapt>=1.11.1',
-  'psutil>=5.0',
-  'numpydoc>=0.9.2',
-  'napari-plugin-engine>=0.1.5',
-  'napari-svg==0.1.2',
-  'tifffile>=2020.2.16',
-  'toolz>=0.10.0',
-  'PySide2>=5.14',
-  'pip',
-]
+requires = []  # populated with .github/workflows/update_version.py
 sources = ['napari']
 icon = "resources/icon"
 
