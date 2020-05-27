@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: ['flake8', 'black']
+        task: [flake8, black]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -33,7 +33,7 @@ jobs:
     # Only run this and subsequent steps on branches.
     # `github.head_ref` only exists on pull requests.
     if: github.head_ref
-    name: Linux $py{{ matrix.python-version }}
+    name: Linux py${{ matrix.python-version }}
     needs: pretest
     runs-on: ubuntu-latest
     strategy:
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest', 'windows-latest']
+        platform: [macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
