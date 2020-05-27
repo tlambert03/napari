@@ -14,9 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task:
-        - 'flake8'
-        - 'black'
+        task: ['flake8', 'black']
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -66,9 +64,10 @@ jobs:
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.platform }}
     needs: pretest
-      strategy:
+    strategy:
+      fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
