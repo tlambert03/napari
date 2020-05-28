@@ -63,14 +63,10 @@ jobs:
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v1
 
-  mac_windows:
-    name: ${{ matrix.platform }} 3.8
-    runs-on: ${{ matrix.platform }}
+  windows:
+    name: Windows 3.8
+    runs-on: windows-latest
     needs: pretest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.8
@@ -82,4 +78,21 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade setuptools tox
       - name: Test
-        run: tox -e py38-pyqt,py38-pyside ${{ runner.os == 'Windows' && '-- -o qt_no_exception_capture=1' || '' }}
+        run: tox -e py38-pyside -- -o qt_no_exception_capture=1
+
+  mac:
+    name: Mac 3.8
+    runs-on: macos-latest
+    needs: pretest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade setuptools tox
+      - name: Test
+        run: tox -e py38-pyqt,py38-pyside
