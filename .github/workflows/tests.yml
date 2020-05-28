@@ -40,6 +40,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
+    env:
+      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -48,11 +50,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install xvfb
+          sudo apt install libxkbcommon-x11-0
+          /sbin/start-stop-daemon --start --quiet \
+            --pidfile /tmp/custom_xvfb_99.pid --make-pidfile \
+            --background --exec /usr/bin/Xvfb \
+            -- :99 -screen 0 1920x1200x24 -ac +extension GLX
           pip install --upgrade pip
           pip install --upgrade setuptools tox
       - name: Test
-        run: xvfb-run --auto-servernum tox
+        run: tox -- --cov-report=xml --cov=napari
       - name: Coverage
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v1
@@ -76,4 +82,4 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade setuptools tox
       - name: Test
-        run: tox ${{ runner.os == 'Windows' && '-- -o qt_no_exception_capture=1' || '' }}
+        run: tox -e py38-pyqt,py38-pyside ${{ runner.os == 'Windows' && '-- -o qt_no_exception_capture=1' || '' }}
