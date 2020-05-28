@@ -59,9 +59,7 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade setuptools tox
       - name: Test
-        run: tox -e $TOXENV -- --cov-report=xml --cov=napari
-        env:
-          TOXENV: py${PYVER//.}-pyqt,py${PYVER//.}-pyside
+        run: tox -e py${PYVER//.}-pyqt,py${PYVER//.}-pyside -- --cov-report=xml --cov=napari
       - name: Coverage
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v1
