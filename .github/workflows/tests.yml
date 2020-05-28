@@ -42,6 +42,7 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
     env:
       DISPLAY: ':99.0'
+      PYVER: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -60,7 +61,7 @@ jobs:
       - name: Test
         run: tox -e $TOXENV -- --cov-report=xml --cov=napari
         env:
-          TOXENV: py${${{ matrix.python-version }}//.}-pyqt,py${${{ matrix.python-version }}//.}-pyside
+          TOXENV: py${PYVER//.}-pyqt,py${PYVER//.}-pyside
       - name: Coverage
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v1
