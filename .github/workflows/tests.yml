@@ -16,49 +16,50 @@ jobs:
       matrix:
         task: [flake8, black]
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install --upgrade setuptools tox
-    - name: Run pre-test check
-      run: |
-        tox -e ${{ matrix.task }}
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade setuptools tox
+      - name: Run pre-test check
+        run: |
+          tox -e ${{ matrix.task }}
 
   linux:
     # Only run this and subsequent steps on branches.
     # `github.head_ref` only exists on pull requests.
-    if: github.head_ref
-    name: Linux (${{ matrix.python-version }})
+    # if: github.head_ref
+    name: Linux ${{ matrix.python-version }}
     needs: pretest
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        sudo apt install libxkbcommon-x11-0
-        /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
-        pip install --upgrade pip
-        pip install --upgrade setuptools tox
-    - name: Test
-      run: tox
-      env:
-        DISPLAY: ':99.0'
-        PY: ${{ matrix.python-version }}
-    - name: Coverage
-      if: matrix.python-version == '3.8'
-      uses: codecov/codecov-action@v1
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          sudo apt install libxkbcommon-x11-0
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
+          pip install --upgrade pip
+          pip install --upgrade setuptools tox
+      - name: Test
+        run: tox
+        env:
+          DISPLAY: ":99.0"
+          PY: ${{ matrix.python-version }}
+      - name: Coverage
+        if: matrix.python-version == '3.8'
+        uses: codecov/codecov-action@v1
 
   mac_windows:
     name: ${{ matrix.platform }} 3.8
@@ -69,14 +70,14 @@ jobs:
       matrix:
         platform: [macos-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install --upgrade setuptools tox
-    - name: Test
-      run: tox
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade setuptools tox
+      - name: Test
+        run: tox -- ${{ runner.os == 'Windows' && '-o qt_no_exception_capture=1' }}
