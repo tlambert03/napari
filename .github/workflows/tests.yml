@@ -33,7 +33,7 @@ jobs:
     # Only run this and subsequent steps on branches.
     # `github.head_ref` only exists on pull requests.
     if: github.head_ref
-    name: Linux ${{ matrix.python-version }}
+    name: Linux (${{ matrix.python-version }})
     needs: pretest
     runs-on: ubuntu-latest
     strategy:
