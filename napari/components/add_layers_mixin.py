@@ -405,6 +405,7 @@ class AddLayersMixin:
         data,
         *,
         num_colors=50,
+        properties=None,
         seed=0.5,
         name=None,
         metadata=None,
@@ -414,6 +415,7 @@ class AddLayersMixin:
         blending='translucent',
         visible=True,
         multiscale=None,
+        color_dict=None,
     ) -> layers.Labels:
         """Add a labels (or segmentation) layer to the layers list.
 
@@ -436,6 +438,10 @@ class AddLayersMixin:
             Labels data as an array or multiscale.
         num_colors : int
             Number of unique colors to use in colormap.
+        properties : dict {str: array (N,)}, DataFrame
+            Properties for each label. Each property should be an array of length
+            N, where N is the number of labels, and the first property corresponds to
+            background.
         seed : float
             Seed for colormap random generator.
         name : str
@@ -469,6 +475,7 @@ class AddLayersMixin:
         layer = layers.Labels(
             data,
             num_colors=num_colors,
+            properties=properties,
             seed=seed,
             name=name,
             metadata=metadata,
@@ -478,6 +485,7 @@ class AddLayersMixin:
             blending=blending,
             visible=visible,
             multiscale=multiscale,
+            color_dict=color_dict,
         )
         self.add_layer(layer)
         return layer
@@ -518,13 +526,13 @@ class AddLayersMixin:
             same length as the length of `data` and each element will be
             applied to each shape otherwise the same value will be used for all
             shapes.
-        edge_color : str or list
+        edge_color : str, array-like
             If string can be any color name recognized by vispy or hex value if
             starting with `#`. If array-like must be 1-dimensional array with 3
             or 4 elements. If a list is supplied it must be the same length as
             the length of `data` and each element will be applied to each shape
             otherwise the same value will be used for all shapes.
-        face_color : str or list
+        face_color : str, array-like
             If string can be any color name recognized by vispy or hex value if
             starting with `#`. If array-like must be 1-dimensional array with 3
             or 4 elements. If a list is supplied it must be the same length as
@@ -544,7 +552,7 @@ class AddLayersMixin:
             Scale factors for the layer.
         translate : tuple of float
             Translation values for the layer.
-        opacity : float or list
+        opacity : float
             Opacity of the layer visual, between 0.0 and 1.0.
         blending : str
             One of a list of preset blending modes that determines how RGB and
