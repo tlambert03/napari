@@ -36,7 +36,7 @@ for mod in walk_modules(napari):
 
 connect_pattern = re.compile(
     r"(?P<source>[a-zA-Z0-9_.]+)\.events\.(?P<event>\w+)"
-    r"\.connect\((?P<target>[a-zA-Z0-9_.]+)\)"
+    r"\.connect\((?P<target>.+)\)"
 )
 
 connections: dict = defaultdict(lambda: defaultdict(list))
@@ -49,7 +49,7 @@ for line in sorted(lines):
         connections[src][event].append(target)
 
 # pprint.pprint(connections)
-for src, events in sorted(connections.items()):
+for src, events in sorted(connections.items(), key=lambda s: s[0].lower()):
     for event, targets in sorted(events.items()):
         for i, target in enumerate(targets):
             if i:
