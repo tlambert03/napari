@@ -12,6 +12,7 @@ from ..intensity_mixin import IntensityVisualizationMixin
 from ._image_constants import Interpolation, Interpolation3D, Rendering
 from ._image_utils import guess_rgb, guess_multiscale
 from ._image_slice import ImageSlice
+from ...utils.event_handler import call_on
 
 
 # Mixin must come before Layer
@@ -348,6 +349,7 @@ class Image(IntensityVisualizationMixin, Layer):
     def iso_threshold(self, value):
         self.events.iso_threshold(value)
 
+    @call_on.text
     def _on_iso_threshold_change(self, value):
         self._iso_threshold = value
         self._update_thumbnail()
@@ -362,6 +364,7 @@ class Image(IntensityVisualizationMixin, Layer):
     def attenuation(self, value):
         self.events.attenuation(value)
 
+    @call_on.attenuation
     def _on_attenuation_change(self, value):
         self.status = format_float(value)
         self._attenuation = value
@@ -432,6 +435,7 @@ class Image(IntensityVisualizationMixin, Layer):
         """Set current rendering mode."""
         self.events.rendering(value)
 
+    @call_on.rendering
     def _on_rendering_change(self, value):
         self._rendering = Rendering(value)
 

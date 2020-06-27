@@ -2,16 +2,17 @@ from typing import Optional, List
 from ..layers import Layer
 from ..utils.naming import force_name_unique
 from ..utils.list import ListModel
+from ..utils.event_handler import call_on
 
 
 def _add(event):
     """When a layer is added, set its name."""
     layers = event.source
     layer = event.item
+    # Register layer event handler
+    layer.event_handler.discover_connections(layers)
     # Coerce name into being unique in layer list
     layer.name = force_name_unique(layer.name, [l.name for l in layers[:-1]])
-    # Register layer event handler
-    layer.event_handler.register_component_to_update(layers)
     # Unselect all other layers
     layers.unselect_all(ignore=layer)
 
@@ -45,6 +46,7 @@ class LayerList(ListModel):
     def __newlike__(self, iterable):
         return ListModel(self._basetype, iterable, self._lookup)
 
+    @call_on.name_unique
     def _on_name_unique_change(self, value):
         """Receive layer name tuple and update the name if is already in list.
 

@@ -8,6 +8,7 @@ from ...layers.image._image_constants import (
 )
 from .qt_image_base_layer import QtBaseImageControls
 from ...utils.event import Event
+from ...utils.event_handler import call_on
 
 
 class QtImageControls(QtBaseImageControls):
@@ -117,6 +118,7 @@ class QtImageControls(QtBaseImageControls):
         self.grid_layout.setColumnStretch(1, 1)
         self.grid_layout.setSpacing(4)
 
+    @call_on.interpolation
     def _on_interpolation_change(self, text):
         """Change interpolation mode for image display.
 
@@ -132,6 +134,7 @@ class QtImageControls(QtBaseImageControls):
         index = self.interpComboBox.findText(text, Qt.MatchFixedString)
         self.interpComboBox.setCurrentIndex(index)
 
+    @call_on.iso_threshold
     def _on_iso_threshold_change(self, value):
         """Receive layer model isosurface change event and update the slider.
 
@@ -142,6 +145,7 @@ class QtImageControls(QtBaseImageControls):
         """
         self.isoThresholdSlider.setValue(value * 100)
 
+    @call_on.attenuation
     def _on_attenuation_change(self, value):
         """Receive layer model attenuation change event and update the slider.
 
@@ -152,6 +156,7 @@ class QtImageControls(QtBaseImageControls):
         """
         self.attenuationSlider.setValue(value * 100)
 
+    @call_on.rendering
     def _on_rendering_change(self, text):
         """Receive layer model rendering change event and update dropdown menu.
 
@@ -207,6 +212,7 @@ class QtImageControls(QtBaseImageControls):
         )
         self.interpComboBox.setCurrentIndex(index)
 
+    @call_on.ndisplay
     def _on_ndisplay_change(self, event=None):
         """Toggle between 2D and 3D visualization modes.
 

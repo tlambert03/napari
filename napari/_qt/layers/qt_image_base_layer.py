@@ -11,6 +11,7 @@ from ..qt_range_slider_popup import QRangeSliderPopup
 from ..utils import qt_signals_blocked
 from .qt_base_layer import QtLayerControls
 from ...utils.event import Event
+from ...utils.event_handler import call_on
 
 
 class QtBaseImageControls(QtLayerControls):
@@ -110,6 +111,7 @@ class QtBaseImageControls(QtLayerControls):
                 self.contrastLimitsSlider, event
             )
 
+    @call_on.contrast_limits
     def _on_contrast_limits_change(self, value):
         """Receive layer model contrast limits change event and update slider.
 
@@ -133,6 +135,7 @@ class QtBaseImageControls(QtLayerControls):
                 self.clim_pop.slider.setValues(value)
                 self.clim_pop._on_values_change(value)
 
+    @call_on.colormap
     def _on_colormap_change(self, value):
         """Receive layer model colormap change event and update dropdown menu.
 
@@ -157,6 +160,7 @@ class QtBaseImageControls(QtLayerControls):
         )
         self.colorbarLabel.setPixmap(QPixmap.fromImage(image))
 
+    @call_on.gamma
     def _on_gamma_change(self, value):
         """Receive the layer model gamma change event and update the slider.
 

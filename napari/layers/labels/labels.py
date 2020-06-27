@@ -12,6 +12,7 @@ from ._labels_constants import Mode, LabelColorMode
 from ._labels_mouse_bindings import draw, pick
 
 from ..utils.layer_utils import dataframe_to_properties
+from ...utils.event_handler import call_on
 
 
 class Labels(Image):
@@ -516,6 +517,7 @@ class Labels(Image):
         """Determine if editable based on layer properties."""
         return not (self.multiscale or self.dims.ndisplay == 3)
 
+    @call_on.editable
     def _on_editable_change(self, value):
         if not value:
             self.mode = Mode.PAN_ZOOM

@@ -524,6 +524,7 @@ class EventEmitter(object):
         try:
             cb(event)
         except Exception:
+            raise
             _handle_exception(
                 self.ignore_callback_errors,
                 self.print_callback_errors,

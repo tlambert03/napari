@@ -15,6 +15,7 @@ from qtpy.QtGui import QDrag, QImage, QPixmap
 import numpy as np
 from copy import copy
 from ..utils.event import Event, EmitterGroup
+from ..utils.event_handler import call_on
 
 
 class QtLayerList(QScrollArea):
@@ -496,7 +497,7 @@ class QtLayerWidget(QFrame):
         # and connecting outside this class and never even need to pass the
         # layer to this class.
         self.layer = layer
-        self.layer.event_handler.register_component_to_update(self)
+        self.layer.event_handler.discover_connections(self)
         self.events.connect(self.layer.event_handler.on_change)
 
         self.setObjectName('layer')
@@ -543,6 +544,7 @@ class QtLayerWidget(QFrame):
         self.setToolTip(msg)
         self._on_selected_change(self.layer.selected)
 
+    @call_on.selected
     def _on_selected_change(self, state):
         """Select layer widget.
 
@@ -613,6 +615,7 @@ class QtLayerWidget(QFrame):
         """
         event.ignore()
 
+    @call_on.name
     def _on_name_change(self, text):
         """Update text displaying name of layer.
 
@@ -624,6 +627,7 @@ class QtLayerWidget(QFrame):
         self.nameTextBox.setText(text)
         self.nameTextBox.home(False)
 
+    @call_on.visible
     def _on_visible_change(self, state):
         """Toggle visibility of the layer.
 
@@ -634,6 +638,7 @@ class QtLayerWidget(QFrame):
         """
         self.visibleCheckBox.setChecked(state)
 
+    @call_on.thumbnail
     def _on_thumbnail_change(self, value):
         """Update thumbnail image on the layer widget.
 

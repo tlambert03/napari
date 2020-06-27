@@ -8,6 +8,7 @@ from .layerlist import LayerList
 from ..utils.event import Event, EmitterGroup
 from ..utils.key_bindings import KeymapHandler, KeymapProvider
 from ..utils.theme import palettes
+from ..utils.event_handler import call_on
 
 
 class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
@@ -380,6 +381,7 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
             self.interactive = active_layer.interactive
             self.active_layer = active_layer
 
+    @call_on.layers
     def _on_layers_change(self, event):
         if len(self.layers) == 0:
             self.dims.ndim = 2
@@ -436,12 +438,15 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
 
         return max_dims
 
+    @call_on.selected
     def _on_selected_change(self, value):
         self._update_active_layer(None)
 
+    @call_on.data
     def _on_data_change(self, value):
         self._on_layers_change(None)
 
+    @call_on.status
     def _on_status_change(self, text):
         """Receive layer status change event and update viewer status.
 
@@ -452,6 +457,7 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
         """
         self.status = text
 
+    @call_on.help
     def _on_help_change(self, text):
         """Receive layer help change event and update viewer help.
 
@@ -462,6 +468,7 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
         """
         self.help = text
 
+    @call_on.interactive
     def _on_interactive_change(self, state):
         """Receive layer interactivity event and update viewer interactivity.
 
@@ -472,6 +479,7 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
         """
         self.interactive = state
 
+    @call_on.cursor
     def _on_cursor_change(self, text):
         """Receive layer cursor change event and update viewer cursor.
 
@@ -482,6 +490,7 @@ class ViewerModel(AddLayersMixin, KeymapHandler, KeymapProvider):
         """
         self.cursor = text
 
+    @call_on.cursor_size
     def _on_cursor_size_change(self, value):
         """Receive layer cursor size change and update viewer cursor size.
 

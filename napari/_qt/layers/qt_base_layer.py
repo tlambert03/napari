@@ -3,6 +3,7 @@ from qtpy.QtWidgets import QSlider, QGridLayout, QFrame, QComboBox
 
 from ...layers.base._base_constants import Blending
 from ...utils.event import Event, EmitterGroup
+from ...utils.event_handler import call_on
 
 
 class QtLayerControls(QFrame):
@@ -40,7 +41,7 @@ class QtLayerControls(QFrame):
         # and connecting outside this class and never even need to pass the
         # layer to this class.
         self.layer = layer
-        self.layer.event_handler.register_component_to_update(self)
+        self.layer.event_handler.discover_connections(self)
         self.events.connect(self.layer.event_handler.on_change)
 
         self.setObjectName('layer')
@@ -72,6 +73,7 @@ class QtLayerControls(QFrame):
         blend_comboBox.activated[str].connect(self.events.blending)
         self.blendComboBox = blend_comboBox
 
+    @call_on.opacity
     def _on_opacity_change(self, value):
         """Receive layer model opacity change event and update opacity slider.
 
@@ -82,6 +84,7 @@ class QtLayerControls(QFrame):
         """
         self.opacitySlider.setValue(value * 100)
 
+    @call_on.blending
     def _on_blending_change(self, text):
         """Receive layer model blending mode change event and update slider.
 

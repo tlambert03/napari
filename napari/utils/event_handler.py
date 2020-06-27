@@ -1,7 +1,24 @@
 import logging
-
+from collections import defaultdict
+from typing import Callable, DefaultDict, Set, Any
+from napari.utils.event import Event
+import inspect
 
 logger = logging.getLogger(__name__)
+
+CALLBACK_MARKER = '_callback_on'
+
+
+class CallOn:
+    def __getattr__(self, value):
+        def decorator(func):
+            setattr(func, CALLBACK_MARKER, value)
+            return func
+
+        return decorator
+
+
+call_on = CallOn()
 
 
 class EventHandler:
@@ -13,43 +30,43 @@ class EventHandler:
         components.
         """
         self.components_to_update = [component] if component else []
+        self._callbacks: DefaultDict[Set[Callable]] = defaultdict(set)
 
-    def register_component_to_update(self, component):
-        """Register a component to listen to emitted events.
+    def connect(self, event_name: str, callback: Callable):
+        if not callable(callback):
+            raise TypeError('`callback` must be a callable function')
+        self._callbacks[event_name].add(callback)
 
-        Parameters
-        ----------
-        component : Object
-            Object that contains callbacks for specific events. These are
-            methods named according to an '_on_*_change' convention.
-        """
-        self.components_to_update.append(component)
+    def discover_connections(self, namespace: Any):
+        for name in dir(namespace):
+            method = getattr(namespace, name, None)
+            if not inspect.isroutine(method):
+                continue
+            event_name = getattr(method, CALLBACK_MARKER, None)
+            if not (isinstance(event_name, str) and event_name):
+                continue
+            self.connect(event_name, method)
 
-    def on_change(self, event=None):
+    def on_change(self, event: Event):
         """Process an event from any of our event emitters.
 
         Parameters
         ----------
-        event : napari.utils.Event
+        event : napari.utils.event.Event
             Event emitter by any of our event emitters. Event must have a
             'type' that indicates the 'name' of the event, and a 'value'
             that carries the data associated with the event. These are
             automatically added by our event emitters.
         """
-        type = event.type
-        logger.debug(f"event: {type}")
+        type_ = event.type
+        logger.debug(f"event: {type_}")
         # until refactor on all layers is complete, not all events will have a
         # value property
-        try:
-            value = event.value
-            logger.debug(f" value: {value}")
-        except AttributeError:
-            logger.debug(f" did not handle event {type}")
+        if not hasattr(event, 'value'):
+            logger.debug(
+                f"Cannot handle event {type_}, without 'value' attribute"
+            )
             return
-
-        # Update based on event value
-        for component in self.components_to_update:
-            update_method_name = f"_on_{type}_change"
-            update_method = getattr(component, update_method_name, None)
-            if update_method:
-                update_method(value)
+        logger.debug(f" value: {event.value}")
+        for callback in self._callbacks[type_]:
+            callback(event.value)

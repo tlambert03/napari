@@ -4,6 +4,7 @@ import numpy as np
 from vispy.app import Canvas
 from vispy.gloo import gl
 from vispy.visuals.transforms import STTransform
+from ..utils.event_handler import call_on
 
 
 class VispyBaseLayer(ABC):
@@ -51,7 +52,7 @@ class VispyBaseLayer(ABC):
         # outside this class and never even need to pass the layer to this
         # class.
         self.layer = layer
-        self.layer.event_handler.register_component_to_update(self)
+        self.layer.event_handler.discover_connections(self)
 
         self.node = node
 
@@ -136,6 +137,7 @@ class VispyBaseLayer(ABC):
     def _on_slice_data_change(self, value=None):
         raise NotImplementedError()
 
+    @call_on.visible
     def _on_visible_change(self, value):
         """Receive layer model visibiliy and update the visual.
 
@@ -146,6 +148,7 @@ class VispyBaseLayer(ABC):
         """
         self.node.visible = value
 
+    @call_on.opacity
     def _on_opacity_change(self, value):
         """Receive layer model opacity and update the visual.
 
@@ -156,6 +159,7 @@ class VispyBaseLayer(ABC):
         """
         self.node.opacity = value
 
+    @call_on.blending
     def _on_blending_change(self, text):
         """Receive layer model blending mode and update the visual.
 
@@ -169,6 +173,7 @@ class VispyBaseLayer(ABC):
         self.node.set_gl_state(text)
         self.node.update()
 
+    @call_on.scale
     def _on_scale_change(self, event=None):
         scale = self.layer._transforms.simplified.set_slice(
             self.layer.dims.displayed
@@ -178,6 +183,7 @@ class VispyBaseLayer(ABC):
         self.layer.corner_pixels = self.coordinates_of_canvas_corners()
         self.layer.position = self._transform_position(self._position)
 
+    @call_on.translate
     def _on_translate_change(self, event=None):
         translate = self.layer._transforms.simplified.set_slice(
             self.layer.dims.displayed

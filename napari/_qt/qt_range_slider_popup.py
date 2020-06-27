@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QHBoxLayout, QLineEdit
 from .qt_modal import QtPopup
 from .qt_range_slider import QHRangeSlider, QVRangeSlider
 from .utils import qt_signals_blocked
+from ..utils.event_handler import call_on
 
 
 class LabelEdit(QLineEdit):
@@ -51,6 +52,7 @@ class LabelEdit(QLineEdit):
             self.slider = parent.slider
             self.setAlignment(Qt.AlignCenter)
 
+    @call_on.text
     def _on_text_changed(self, text):
         """Update label text displayed above the slider handle.
 
@@ -184,6 +186,7 @@ class QRangeSliderPopup(QtPopup):
         self.curmin_label.update_position()
         self.curmax_label.update_position()
 
+    @call_on.values
     def _on_values_change(self, values):
         """Update labels of the current contrast range.
 
@@ -198,6 +201,7 @@ class QRangeSliderPopup(QtPopup):
             self.curmax_label.setText(self._numformat(cmax_))
             self._update_cur_label_positions()
 
+    @call_on.range
     def _on_range_change(self, values):
         """Update values of current contrast range and display labels.
 

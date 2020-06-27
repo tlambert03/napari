@@ -8,9 +8,9 @@ from vispy.color.colormap import Colormap
 
 from ...utils.colormaps import ensure_colormap_tuple
 from ...types import ValidColormapArg
-
 from ..base import Layer
 from ...utils.event import Event
+from ...utils.event_handler import call_on
 from ...utils.status_messages import format_float
 from ...utils.colormaps.standardize_color import (
     transform_color,
@@ -1335,6 +1335,7 @@ class Points(Layer):
         """
         return self.edge_color[self._indices_view]
 
+    @call_on.editable
     def _on_editable_change(self, value):
         if not value:
             self.mode = Mode.PAN_ZOOM
