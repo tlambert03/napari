@@ -1,11 +1,13 @@
+import inspect
+import re
 import warnings
+from collections import defaultdict
 from functools import partial
 from typing import List
 
+import napari.utils.event
 import numpy as np
 import pytest
-from qtpy.QtWidgets import QApplication
-
 from napari import Viewer
 from napari.components import LayerList
 from napari.layers import Image, Labels, Points, Shapes, Vectors
@@ -16,6 +18,7 @@ from napari.plugins._builtins import (
     napari_write_shapes,
 )
 from napari.utils import io
+from qtpy.QtWidgets import QApplication
 
 try:
     from skimage.data import image_fetcher
@@ -291,3 +294,66 @@ def irregular_images():
 @pytest.fixture
 def single_tiff():
     return [image_fetcher.fetch('data/multipage.tif')]
+
+
+connections: dict = defaultdict(lambda: defaultdict(set))
+
+
+def pytest_sessionfinish(session, exitstatus):
+    import json
+
+    out = {
+        k: {k2: list(v2) for k2, v2 in v.items()}
+        for k, v in connections.items()
+    }
+
+    with open("/Users/talley/Desktop/connections.json", 'w') as f:
+        json.dump(out, f)
+
+
+def _class_name(kls, full=False):
+    out = ''
+    if full:
+        out += f'{kls.__module__}.'
+    out += kls.__name__
+    return out
+
+
+@pytest.fixture(autouse=True)
+def trace_connections(monkeypatch):
+
+    orig = napari.utils.event.EventEmitter.connect
+
+    def _connect(self, *args, **kwargs):
+        cb = orig(self, *args, **kwargs)
+        try:
+            src = _class_name(self.source.__class__)
+            event = self.default_args.get('type')
+            if isinstance(cb, napari.utils.event.EventEmitter):
+                meth = 'events.' + cb.default_args.get('type')
+                target = f'{_class_name(cb.source.__class__)}.{meth}'
+            elif callable(cb):
+                if '<lambda>' in cb.__name__:
+                    target = inspect.getsource(cb).replace("\n", "").strip()
+                    lam, body = re.match(r'.*(lambda.+):(.+)', target).groups()
+                    if body.endswith("))"):
+                        body = body[:-1]
+                    if 'self' in body:
+                        cell = cb.__closure__[0]
+                        slf = cell.cell_contents.__class__
+                        body = body.replace("self", _class_name(slf))
+                    target = f"{lam}: {body.strip()}"
+                else:
+                    target = _class_name(cb)
+            else:
+                kls, meth = cb
+                kls = kls().__class__
+                if not hasattr(kls, meth):
+                    return
+                target = f'{_class_name(kls)}.{meth}'
+            connections[src][event].add(target)
+        except Exception as e:
+            print(str(e), cb)
+        return
+
+    monkeypatch.setattr(napari.utils.event.EventEmitter, 'connect', _connect)
