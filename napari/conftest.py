@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from napari import Viewer
 from napari.components import LayerList
-from napari.layers import Image, Labels, Points, Shapes, Vectors
+from napari.layers import Image, Labels, Points, Shapes, Vectors, NAMES
 from napari.plugins._builtins import (
     napari_write_image,
     napari_write_labels,
@@ -307,6 +307,29 @@ def pytest_sessionfinish(session, exitstatus):
         for k, v in connections.items()
     }
 
+    # figure out which connections were made on the base layer
+    out.setdefault("Layer", {})
+    for key in set(out.get("Image").keys()):
+        out['Layer'][key] = list(
+            set.intersection(
+                *(set(out[lname.title()][key]) for lname in NAMES)
+            )
+        )
+
+    # remove those from subclass layers
+    for key, _cnx in out['Layer'].items():
+        for lname in NAMES:
+            tname = lname.title()
+            diff = set(out[tname].get(key, {})) - set(_cnx)
+            if diff:
+                out[tname][key] = list(diff)
+            else:
+                out[tname].pop(key)
+
+    for key, val in list(out.items()):
+        if not val:
+            out.pop(key)
+
     with open("connections.json", 'w') as f:
         json.dump(out, f)
 
@@ -353,7 +376,7 @@ def trace_connections(monkeypatch):
                 klass = klass().__class__
                 if not hasattr(klass, method):
                     return
-            # print(klass, method)
+            # find the superclass that declares the method
             for _kls in reversed(inspect.getmro(Image)):
                 if method in _kls.__dict__:
                     klass = _kls
@@ -365,3 +388,6 @@ def trace_connections(monkeypatch):
         return
 
     monkeypatch.setattr(napari.utils.event.EventEmitter, 'connect', _connect)
+
+
+# http://www.plantuml.com/plantuml/uml/ZTF1QiCm303Gkx_2zDuVs67qiEDs6kmoWb5j9J5px60hAsNqt-V4xHg1b-rGQEHd8IdA8H54cWOdHj0VqA7SFSCPuqv-2IdVrJGQ85JKJyFHWtND4ar8ghTTx_AFxY4qbk3ei5bVDNP8ZSYHDiAmf3-YIoN_p2AMR8b2FCytBtVxsiE8AzjQRrElJ8IJzTs2fRW8SULl5ayONu91Twi_UENcVfBIFVYEbmQQx2SMm0wi9upbbCNr55CeT3jpEMbMjJtPOMaaHvO1o_t-iPP5FiYS0HYgbBiuJEXGqt_ihvBrck7gaMisWGpBFp7tjT6BDpQDERfsV4PrnDUYZlZIrGrVGqus2m_HODoikeYoebV3z_Fd7MbQiyf7bM4B6fKEBiI_BPhkPW_epJIuRm00
