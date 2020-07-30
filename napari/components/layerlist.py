@@ -57,10 +57,10 @@ class LayerList(ListModel):
         new_name : str
             Coerced, unique name.
         """
-        for l in self:
-            if l is layer:
+        for _layer in self:
+            if _layer is layer:
                 continue
-            if l.name == name:
+            if _layer.name == name:
                 name = inc_name_count(name)
 
         return name
@@ -231,7 +231,7 @@ class LayerList(ListModel):
         ----------
         path : str
             A filepath, directory, or URL to open.  Extensions may be used to
-            specify output format (provided a plugin is avaiable for the
+            specify output format (provided a plugin is available for the
             requested format).
         selected : bool
             Optional flag to only save selected layers. False by default.

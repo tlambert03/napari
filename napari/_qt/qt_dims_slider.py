@@ -84,6 +84,7 @@ class QtDimSliderWidget(QWidget):
         layout.addWidget(self.totslice_label)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
+        layout.setAlignment(Qt.AlignVCenter)
         self.setLayout(layout)
         self.dims.events.axis_labels.connect(self._pull_label)
 
@@ -113,6 +114,13 @@ class QtDimSliderWidget(QWidget):
         label.editingFinished.connect(self._clear_label_focus)
         self.axis_label = label
 
+    def _value_changed(self, value):
+        """Slider changed to this new value.
+
+        We split this out as a separate function for perfmon.
+        """
+        self.dims.set_point(self.axis, value)
+
     def _create_range_slider_widget(self):
         """Creates a range slider widget for a given axis."""
         _range = self.dims.range[self.axis]
@@ -131,9 +139,7 @@ class QtDimSliderWidget(QWidget):
         slider.setValue(point)
 
         # Listener to be used for sending events back to model:
-        slider.valueChanged.connect(
-            lambda value: self.dims.set_point(self.axis, value)
-        )
+        slider.valueChanged.connect(self._value_changed)
 
         def slider_focused_listener():
             self.qt_dims.last_used = self.axis
@@ -234,8 +240,8 @@ class QtDimSliderWidget(QWidget):
     def fps(self, value):
         """Frames per second for animation.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         value : float
             Frames per second for animation.
         """
@@ -267,8 +273,8 @@ class QtDimSliderWidget(QWidget):
     def loop_mode(self, value):
         """Loop mode for animation.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         value : napari._qt._constants.LoopMode
             Loop mode for animation.
             Available options for the loop mode string enumeration are:
@@ -298,8 +304,8 @@ class QtDimSliderWidget(QWidget):
     def frame_range(self, value):
         """Frame range for animation, as (minimum_frame, maximum_frame).
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         value : tuple(int, int)
             Frame range as tuple/list with range (minimum_frame, maximum_frame)
         """
@@ -401,7 +407,7 @@ class QtCustomDoubleSpinBox(QDoubleSpinBox):
     the valueChanged event is emitted AND the left mouse button is down.
 
     The original use case here was the FPS spinbox in the play button, where
-    hooking to the actual valueChanged event is undesireable, because if the
+    hooking to the actual valueChanged event is undesirable, because if the
     user clears the LineEdit to type, for example, "0.5", then play back
     will temporarily pause when "0" is typed (if the animation is currently
     running).  However, the editingFinished event ignores mouse click events on
@@ -427,8 +433,8 @@ class QtCustomDoubleSpinBox(QDoubleSpinBox):
     def textFromValue(self, value):
         """This removes the decimal places if the float is an integer.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         value : float
             The value of this custom double spin box.
         """

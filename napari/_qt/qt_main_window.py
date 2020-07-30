@@ -215,12 +215,17 @@ class Window:
                 QApplication.quit()
             # otherwise, something else created the QApp before us (such as
             # %gui qt IPython magic).  If we quit the app in this case, then
-            # *later* attemps to instantiate a napari viewer won't work until
+            # *later* attempts to instantiate a napari viewer won't work until
             # the event loop is restarted with app.exec_().  So rather than
             # quit just close all the windows (and clear our app icon).
             else:
                 QApplication.setWindowIcon(QIcon())
                 self.close()
+
+            if perf.USE_PERFMON:
+                # Write trace file before exit, if we were writing one.
+                # Is there a better place to make sure this is done on exit?
+                perf.timers.stop_trace_file()
 
         exitAction.triggered.connect(handle_exit)
 
@@ -388,8 +393,8 @@ class Window:
 
         Parameters
         ----------
-            widget : QWidget | str
-                If widget == 'all', all docked widgets will be removed.
+        widget : QWidget | str
+            If widget == 'all', all docked widgets will be removed.
         """
         if widget == 'all':
             for dw in self._qt_window.findChildren(QDockWidget):
@@ -450,8 +455,8 @@ class Window:
 
         Parameters
         ----------
-        event : qtpy.QtCore.QEvent
-            Event from the Qt context.
+        event : napari.utils.event.Event
+            The napari event that triggered this method.
         """
         self._status_bar.showMessage(event.text)
 
@@ -460,8 +465,8 @@ class Window:
 
         Parameters
         ----------
-        event : qtpy.QtCore.QEvent
-            Event from the Qt context.
+        event : napari.utils.event.Event
+            The napari event that triggered this method.
         """
         self._qt_window.setWindowTitle(event.text)
 
@@ -470,8 +475,8 @@ class Window:
 
         Parameters
         ----------
-        event : qtpy.QtCore.QEvent
-            Event from the Qt context.
+        event : napari.utils.event.Event
+            The napari event that triggered this method.
         """
         self._help.setText(event.text)
 
