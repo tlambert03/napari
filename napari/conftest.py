@@ -307,7 +307,7 @@ def pytest_sessionfinish(session, exitstatus):
         for k, v in connections.items()
     }
 
-    with open("/Users/talley/Desktop/connections.json", 'w') as f:
+    with open("connections.json", 'w') as f:
         json.dump(out, f)
 
 
@@ -324,14 +324,17 @@ def trace_connections(monkeypatch):
 
     orig = napari.utils.event.EventEmitter.connect
 
+    # self is the EventEmitter
     def _connect(self, *args, **kwargs):
         cb = orig(self, *args, **kwargs)
         try:
+            # src is the name of the class that emitted the event
             src = _class_name(self.source.__class__)
+            # event is the name of the event
             event = self.default_args.get('type')
             if isinstance(cb, napari.utils.event.EventEmitter):
-                meth = 'events.' + cb.default_args.get('type')
-                target = f'{_class_name(cb.source.__class__)}.{meth}'
+                method = 'events.' + cb.default_args.get('type')
+                klass = cb.source.__class__
             elif callable(cb):
                 if '<lambda>' in cb.__name__:
                     target = inspect.getsource(cb).replace("\n", "").strip()
@@ -340,17 +343,22 @@ def trace_connections(monkeypatch):
                         body = body[:-1]
                     if 'self' in body:
                         cell = cb.__closure__[0]
-                        slf = cell.cell_contents.__class__
-                        body = body.replace("self", _class_name(slf))
-                    target = f"{lam}: {body.strip()}"
+                        klass = cell.cell_contents.__class__
+                        method = body.replace("self", '').strip('(). ')
                 else:
-                    target = _class_name(cb)
+                    klass = None
+                    method = _class_name(cb)
             else:
-                kls, meth = cb
-                kls = kls().__class__
-                if not hasattr(kls, meth):
+                klass, method = cb
+                klass = klass().__class__
+                if not hasattr(klass, method):
                     return
-                target = f'{_class_name(kls)}.{meth}'
+            # print(klass, method)
+            for _kls in reversed(inspect.getmro(Image)):
+                if method in _kls.__dict__:
+                    klass = _kls
+                    break
+            target = f"{_class_name(klass)}.{method}"
             connections[src][event].add(target)
         except Exception as e:
             print(str(e), cb)
