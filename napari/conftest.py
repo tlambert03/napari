@@ -312,7 +312,7 @@ def pytest_sessionfinish(session, exitstatus):
     for key in set(out.get("Image").keys()):
         out['Layer'][key] = list(
             set.intersection(
-                *(set(out[lname.title()][key]) for lname in NAMES)
+                *(set(out[lname.title()].get(key, [])) for lname in NAMES)
             )
         )
 
@@ -320,7 +320,9 @@ def pytest_sessionfinish(session, exitstatus):
     for key, _cnx in out['Layer'].items():
         for lname in NAMES:
             tname = lname.title()
-            diff = set(out[tname].get(key, {})) - set(_cnx)
+            if tname not in out or key not in out[tname]:
+                continue
+            diff = set(out[tname][key]) - set(_cnx)
             if diff:
                 out[tname][key] = list(diff)
             else:

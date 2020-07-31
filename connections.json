@@ -1,0 +1,375 @@
+{
+  "TransformChain": {
+    "added": ["TransformChain.events.changed"],
+    "removed": ["TransformChain.events.changed"],
+    "reordered": ["TransformChain.events.changed"]
+  },
+  "Points": {
+    "select": ["Layer._set_highlight"],
+    "deselect": ["Layer._set_highlight"],
+    "refresh": ["VispyPointsLayer.node.update"],
+    "set_data": ["VispyPointsLayer._on_data_change"],
+    "visible": ["VispyPointsLayer._on_visible_change"],
+    "opacity": [
+      "VispyPointsLayer._on_opacity_change",
+      "QtPointsControls._on_opacity_change"
+    ],
+    "blending": [
+      "VispyPointsLayer._on_blending_change",
+      "QtPointsControls._on_blending_change"
+    ],
+    "scale": ["VispyPointsLayer._on_scale_change"],
+    "translate": ["VispyPointsLayer._on_translate_change"],
+    "symbol": [
+      "VispyPointsLayer._on_data_change",
+      "QtPointsControls._on_symbol_change"
+    ],
+    "edge_width": ["VispyPointsLayer._on_data_change"],
+    "edge_color": ["VispyPointsLayer._on_data_change"],
+    "face_color": ["VispyPointsLayer._on_data_change"],
+    "highlight": ["VispyPointsLayer._on_highlight_change"],
+    "mode": ["QtPointsControls.set_mode"],
+    "n_dimensional": ["QtPointsControls._on_n_dim_change"],
+    "size": ["QtPointsControls._on_size_change"],
+    "current_edge_color": ["QtPointsControls._on_edge_color_change"],
+    "current_face_color": ["QtPointsControls._on_face_color_change"],
+    "editable": ["QtPointsControls._on_editable_change"]
+  },
+  "Dims": {
+    "ndisplay": [
+      "QtDims._update_display",
+      "QtImageControls._on_ndisplay_change",
+      "Layer._update_dims",
+      "Viewer._on_layers_change",
+      "ViewerModel._on_layers_change",
+      "Layer._set_editable",
+      "QtNDisplayButton._on_ndisplay_change",
+      "Labels._reset_history",
+      "Viewer._update_layers",
+      "ViewerModel._update_layers"
+    ],
+    "order": [
+      "QtDims._update_display",
+      "Viewer._on_layers_change",
+      "Layer._update_dims",
+      "ViewerModel._on_layers_change",
+      "Labels._reset_history",
+      "Viewer._update_layers",
+      "ViewerModel._update_layers",
+      "Layer.refresh"
+    ],
+    "axis": [
+      "QtDims._update_slider(ev.axis",
+      "Labels._reset_history",
+      "Viewer._update_layers",
+      "ViewerModel._update_layers",
+      "Layer.refresh",
+      "AnimationWorker._on_axis_changed"
+    ],
+    "axis_labels": ["QtDimSliderWidget._pull_label"],
+    "ndim": ["QtDims._update_nsliders"],
+    "range": [
+      "QtDims._update_range(ev.axis",
+      "Viewer._on_layers_change",
+      "ViewerModel._on_layers_change"
+    ],
+    "camera": [
+      "Viewer.reset_view",
+      "ViewerModel.reset_view",
+      "QtViewer._update_camera"
+    ]
+  },
+  "ListModel": {
+    "added": ["ListModel.events.changed"],
+    "removed": ["ListModel.events.changed"],
+    "reordered": ["ListModel.events.changed"]
+  },
+  "LayerList": {
+    "added": [
+      "QtControls._add",
+      "QtViewer._add_layer",
+      "QtLayerList._add",
+      "LayerList.events.changed"
+    ],
+    "removed": [
+      "QtLayerList._remove",
+      "QtViewer._remove_layer",
+      "QtControls._remove",
+      "LayerList.events.changed"
+    ],
+    "reordered": [
+      "QtLayerList._reorder",
+      "QtViewer._reorder_layers",
+      "LayerList.events.changed"
+    ],
+    "changed": [
+      "Viewer._on_layers_change",
+      "ViewerModel._on_layers_change",
+      "Viewer._update_grid",
+      "Viewer._update_active_layer",
+      "ViewerModel._update_grid",
+      "ViewerModel._update_active_layer"
+    ]
+  },
+  "Viewer": {
+    "active_layer": ["QtControls._display"],
+    "grid": ["QtGridViewButton._on_grid_change"],
+    "interactive": ["QtViewer._on_interactive"],
+    "cursor": ["QtViewer._on_cursor"],
+    "reset_view": ["QtViewer._on_reset_view"],
+    "palette": ["Window._update_palette", "QtViewer._update_palette"],
+    "layers_change": ["QtViewer.dims.stop"],
+    "status": ["Window._status_changed"],
+    "help": ["Window._help_changed"],
+    "title": ["Window._title_changed"]
+  },
+  "Image": {
+    "refresh": ["VispyImageLayer.node.update"],
+    "set_data": ["VispyImageLayer._on_data_change"],
+    "visible": ["VispyImageLayer._on_visible_change"],
+    "opacity": [
+      "QtBaseImageControls._on_opacity_change",
+      "QtImageControls._on_opacity_change",
+      "VispyImageLayer._on_opacity_change"
+    ],
+    "blending": [
+      "QtBaseImageControls._on_blending_change",
+      "QtImageControls._on_blending_change",
+      "VispyImageLayer._on_blending_change"
+    ],
+    "scale": ["VispyImageLayer._on_scale_change"],
+    "translate": ["VispyImageLayer._on_translate_change"],
+    "rendering": [
+      "QtImageControls._on_rendering_change",
+      "VispyImageLayer._on_rendering_change"
+    ],
+    "interpolation": [
+      "VispyImageLayer._on_interpolation_change",
+      "QtImageControls._on_interpolation_change"
+    ],
+    "colormap": [
+      "QtBaseImageControls._on_colormap_change",
+      "VispyImageLayer._on_colormap_change",
+      "QtImageControls._on_colormap_change"
+    ],
+    "contrast_limits": [
+      "QtImageControls._on_clims_change",
+      "QtBaseImageControls._on_clims_change",
+      "VispyImageLayer._on_contrast_limits_change"
+    ],
+    "gamma": [
+      "VispyImageLayer._on_gamma_change",
+      "QtImageControls.gamma_slider_update",
+      "QtBaseImageControls.gamma_slider_update"
+    ],
+    "iso_threshold": [
+      "QtImageControls._on_iso_threshold_change",
+      "VispyImageLayer._on_iso_threshold_change"
+    ],
+    "attenuation": [
+      "QtImageControls._on_attenuation_change",
+      "VispyImageLayer._on_attenuation_change"
+    ]
+  },
+  "Labels": {
+    "refresh": ["VispyImageLayer.node.update"],
+    "set_data": ["VispyImageLayer._on_data_change"],
+    "visible": ["VispyImageLayer._on_visible_change"],
+    "opacity": [
+      "VispyImageLayer._on_opacity_change",
+      "QtLabelsControls._on_opacity_change"
+    ],
+    "blending": [
+      "QtLabelsControls._on_blending_change",
+      "VispyImageLayer._on_blending_change"
+    ],
+    "scale": ["VispyImageLayer._on_scale_change"],
+    "translate": ["VispyImageLayer._on_translate_change"],
+    "rendering": ["VispyImageLayer._on_rendering_change"],
+    "interpolation": ["VispyImageLayer._on_interpolation_change"],
+    "colormap": ["VispyImageLayer._on_colormap_change"],
+    "contrast_limits": ["VispyImageLayer._on_contrast_limits_change"],
+    "gamma": ["VispyImageLayer._on_gamma_change"],
+    "iso_threshold": ["VispyImageLayer._on_iso_threshold_change"],
+    "attenuation": ["VispyImageLayer._on_attenuation_change"],
+    "mode": ["QtLabelsControls._on_mode_change"],
+    "selected_label": [
+      "QtColorBox.update_color",
+      "QtLabelsControls._on_selection_change"
+    ],
+    "brush_size": ["QtLabelsControls._on_brush_size_change"],
+    "contiguous": ["QtLabelsControls._on_contig_change"],
+    "n_dimensional": ["QtLabelsControls._on_n_dim_change"],
+    "editable": ["QtLabelsControls._on_editable_change"],
+    "preserve_labels": ["QtLabelsControls._on_preserve_labels_change"],
+    "color_mode": ["QtLabelsControls._on_color_mode_change"]
+  },
+  "TextManager": {
+    "text": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "rotation": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "translation": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "anchor": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "color": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "size": [
+      "VispyShapesLayer._on_text_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "visible": [
+      "VispyShapesLayer._on_text_change",
+      "QtShapesControls._on_text_visibility_change",
+      "QtPointsControls._on_text_visibility_change",
+      "VispyPointsLayer._on_text_change"
+    ],
+    "blending": [
+      "VispyPointsLayer._on_blending_change",
+      "VispyShapesLayer._on_blending_change"
+    ]
+  },
+  "Vectors": {
+    "refresh": ["VispyVectorsLayer.node.update"],
+    "set_data": ["VispyVectorsLayer._on_data_change"],
+    "visible": ["VispyVectorsLayer._on_visible_change"],
+    "opacity": [
+      "VispyVectorsLayer._on_opacity_change",
+      "QtVectorsControls._on_opacity_change"
+    ],
+    "blending": [
+      "VispyVectorsLayer._on_blending_change",
+      "QtVectorsControls._on_blending_change"
+    ],
+    "scale": ["VispyVectorsLayer._on_scale_change"],
+    "translate": ["VispyVectorsLayer._on_translate_change"],
+    "edge_color": [
+      "VispyVectorsLayer._on_data_change",
+      "QtVectorsControls._on_edge_color_change"
+    ],
+    "edge_width": ["QtVectorsControls._on_width_change"],
+    "length": ["QtVectorsControls._on_len_change"],
+    "edge_color_mode": ["QtVectorsControls._on_edge_color_mode_change"]
+  },
+  "Shapes": {
+    "deselect": ["Shapes._finish_drawing"],
+    "face_color": [
+      "VispyShapesLayer._on_data_change",
+      "Layer._update_thumbnail"
+    ],
+    "edge_color": [
+      "VispyShapesLayer._on_data_change",
+      "Layer._update_thumbnail"
+    ],
+    "refresh": ["VispyShapesLayer.node.update"],
+    "set_data": ["VispyShapesLayer._on_data_change"],
+    "visible": ["VispyShapesLayer._on_visible_change"],
+    "opacity": [
+      "VispyShapesLayer._on_opacity_change",
+      "QtShapesControls._on_opacity_change"
+    ],
+    "blending": [
+      "QtShapesControls._on_blending_change",
+      "VispyShapesLayer._on_blending_change"
+    ],
+    "scale": ["VispyShapesLayer._on_scale_change"],
+    "translate": ["VispyShapesLayer._on_translate_change"],
+    "edge_width": [
+      "VispyShapesLayer._on_data_change",
+      "QtShapesControls._on_edge_width_change"
+    ],
+    "highlight": ["VispyShapesLayer._on_highlight_change"],
+    "mode": ["QtShapesControls.set_mode"],
+    "current_edge_color": ["QtShapesControls._on_edge_color_change"],
+    "current_face_color": ["QtShapesControls._on_face_color_change"],
+    "editable": ["QtShapesControls._on_editable_change"]
+  },
+  "Surface": {
+    "refresh": ["VispySurfaceLayer.node.update"],
+    "set_data": ["VispySurfaceLayer._on_data_change"],
+    "visible": ["VispySurfaceLayer._on_visible_change"],
+    "opacity": [
+      "QtBaseImageControls._on_opacity_change",
+      "VispySurfaceLayer._on_opacity_change",
+      "QtSurfaceControls._on_opacity_change"
+    ],
+    "blending": [
+      "QtBaseImageControls._on_blending_change",
+      "VispySurfaceLayer._on_blending_change",
+      "QtSurfaceControls._on_blending_change"
+    ],
+    "scale": ["VispySurfaceLayer._on_scale_change"],
+    "translate": ["VispySurfaceLayer._on_translate_change"],
+    "colormap": [
+      "QtSurfaceControls._on_colormap_change",
+      "VispySurfaceLayer._on_colormap_change",
+      "QtBaseImageControls._on_colormap_change"
+    ],
+    "contrast_limits": [
+      "VispySurfaceLayer._on_contrast_limits_change",
+      "QtBaseImageControls._on_clims_change",
+      "QtSurfaceControls._on_clims_change"
+    ],
+    "gamma": [
+      "QtBaseImageControls.gamma_slider_update",
+      "VispySurfaceLayer._on_gamma_change",
+      "QtSurfaceControls.gamma_slider_update"
+    ]
+  },
+  "Layer": {
+    "select": [
+      "ViewerModel._update_active_layer",
+      "Viewer._update_active_layer",
+      "QtLayerList._scroll_on_select",
+      "QtLayerWidget.setSelected(True"
+    ],
+    "help": ["Viewer._update_help", "ViewerModel._update_help"],
+    "opacity": [],
+    "attenuation": [],
+    "blending": [],
+    "interactive": [
+      "Viewer._update_interactive",
+      "ViewerModel._update_interactive"
+    ],
+    "cursor": ["Viewer._update_cursor", "ViewerModel._update_cursor"],
+    "translate": [],
+    "rendering": [],
+    "interpolation": [],
+    "visible": ["QtLayerWidget._on_visible_change"],
+    "iso_threshold": [],
+    "scale": [],
+    "gamma": [],
+    "contrast_limits": [],
+    "name": ["QtLayerWidget._on_layer_name_change"],
+    "cursor_size": [
+      "ViewerModel._update_cursor_size",
+      "Viewer._update_cursor_size"
+    ],
+    "set_data": [],
+    "deselect": [
+      "Viewer._update_active_layer",
+      "ViewerModel._update_active_layer",
+      "QtLayerWidget.setSelected(False"
+    ],
+    "colormap": [],
+    "data": [
+      "Layer._set_editable",
+      "Viewer._on_layers_change",
+      "ViewerModel._on_layers_change"
+    ],
+    "status": ["ViewerModel._update_status", "Viewer._update_status"],
+    "refresh": [],
+    "thumbnail": ["QtLayerWidget._on_thumbnail_change"]
+  }
+}
