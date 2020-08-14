@@ -1,9 +1,10 @@
-import numpy as np
 import dask.array as da
+import numpy as np
+import pytest
+
 from napari.components import ViewerModel
 from napari.utils.colormaps import colormaps, ensure_colormap_tuple
-from napari.utils.misc import ensure_sequence_of_iterables, ensure_iterable
-import pytest
+from napari.utils.misc import ensure_iterable, ensure_sequence_of_iterables
 
 base_colormaps = colormaps.CYMRGB
 two_colormaps = colormaps.MAGENTA_GREEN
@@ -108,7 +109,7 @@ def test_multichannel(shape, kwargs):
         if 'blending' not in kwargs:
             assert viewer.layers[i].blending == 'additive'
         for key, expectation in kwargs.items():
-            # broadcast expections
+            # broadcast exceptions
             if key in {'scale', 'translate', 'contrast_limits', 'metadata'}:
                 expectation = ensure_sequence_of_iterables(expectation)
             elif key == 'colormap' and expectation is not None:
@@ -183,10 +184,24 @@ def test_multichannel_dask_array():
         assert isinstance(viewer.layers[i].data, da.Array)
 
 
-def test_multichannel_error_hint():
+def test_forgot_multichannel_error_hint():
+    """Test that a helpful error is raised when channel_axis is not used."""
     viewer = ViewerModel()
     np.random.seed(0)
     data = da.random.random((15, 10, 5))
     with pytest.raises(TypeError) as e:
         viewer.add_image(data, name=['a', 'b', 'c'])
     assert "did you mean to specify a 'channel_axis'" in str(e)
+
+
+def test_multichannel_index_error_hint():
+    """Test multichannel error when arg length != n_channels."""
+    viewer = ViewerModel()
+    np.random.seed(0)
+    data = da.random.random((5, 10, 5))
+    with pytest.raises(IndexError) as e:
+        viewer.add_image(data, channel_axis=0, name=['a', 'b'])
+    assert (
+        "Requested channel_axis (0) had length 5, but the "
+        "'name' argument only provided 2 values." in str(e)
+    )

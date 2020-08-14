@@ -1,7 +1,8 @@
-from vispy.scene.visuals import Mesh
-from vispy.color import Colormap
-from .vispy_base_layer import VispyBaseLayer
 import numpy as np
+from vispy.color import Colormap
+from vispy.scene.visuals import Mesh
+
+from .vispy_base_layer import VispyBaseLayer
 
 
 class VispySurfaceLayer(VispyBaseLayer):
@@ -32,7 +33,7 @@ class VispySurfaceLayer(VispyBaseLayer):
             faces = None
             vertex_values = np.array([0])
         else:
-            # Offseting so pixels now centered
+            # Offsetting so pixels now centered
             vertices = self.layer._data_view[:, ::-1] + 0.5
             faces = self.layer._view_faces
             vertex_values = self.layer._view_vertex_values

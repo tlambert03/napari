@@ -1,9 +1,9 @@
-import sys
 import os
+import sys
 
 from napari_plugin_engine import PluginManager
-from . import hook_specifications
-from . import _builtins
+
+from . import _builtins, hook_specifications
 
 if os.name == 'nt':
     # This is where plugins will be in bundled apps on windows
