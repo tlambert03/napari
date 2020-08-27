@@ -17,19 +17,19 @@ from .build_icons import build_pyqt_resources
 
 def _try_touch_file(target) -> Optional[Path]:
     """Test to see if we have permissions to create a file at ``target``.
-    
+
     If the target already exists, it will not be touched.  If it does not
     exist, this function attempts to create it and delete it (i.e. testing
     permissions).  NOTE: all parent directories required to write the file will
-    be created, but NOT deleted.  
-    
+    be created, but NOT deleted.
+
     If successful, the path is returned, if not, return None.
- 
+
     Parameters
     ----------
     target : str
         Filepath to test
-    
+
     Returns
     -------
     target : str or None
@@ -47,11 +47,12 @@ def _try_touch_file(target) -> Optional[Path]:
     return target
 
 
-def import_resources(version: str = '', overwrite: bool = False) -> None:
+def import_resources(version: str = '', overwrite: bool = False) -> str:
     """Build and import our icons as Qt resources.
 
     This function attempts to write that file to one of three locations
     (in this order):
+
         1. The directory of *this* file (currently ``napari/resources``)
         2. The user ~/.config/napari directory
         3. A temporary file.
@@ -69,10 +70,17 @@ def import_resources(version: str = '', overwrite: bool = False) -> None:
     overwrite : bool, optional
         Whether to recompile and overwrite the resources.
         Resources will be rebuilt if any of the following are True:
+
             - the resources file does not already exist.
             - ``overwrite`` argument is True
             - the ``NAPARI_REBUILD_RESOURCES`` environmental variable is set
-    
+
+    Returns
+    -------
+    out_path : str
+        Path to the python resource file. File is already imported under `napari._qt_resources name`.
+        Copy this file to make the SVGs and other resources available in bundled application.
+
     Raises
     ------
     PermissionError
@@ -124,7 +132,7 @@ def import_resources(version: str = '', overwrite: bool = False) -> None:
 @lru_cache(maxsize=4)
 def get_stylesheet(extra: Optional[List[str]] = None) -> str:
     """Combine all qss files into single (cached) style string.
-    
+
     Note, this string may still have {{ template_variables }} that need to be
     replaced using the :func:`napari.utils.theme.template` function.  (i.e. the
     output of this function serves as the input of ``template()``)
@@ -133,7 +141,7 @@ def get_stylesheet(extra: Optional[List[str]] = None) -> str:
     ----------
     extra : list of str, optional
         Additional paths to QSS files to include in stylesheet, by default None
-    
+
     Returns
     -------
     css : str

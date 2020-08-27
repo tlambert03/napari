@@ -65,8 +65,8 @@ instance/
 
 # Sphinx documentation
 docs/source/api/
-docs/source/developers/
 docs/source/release/
+docs/source/releases.rst
 docs/build/
 
 # PyBuilder
@@ -123,3 +123,5 @@ napari/resources/_qt_resources*.py
 napari/resources/res.qrc
 # ignore all generated themed svgs
 napari/resources/themes
+
+napari/_version.py

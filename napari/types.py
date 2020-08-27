@@ -1,8 +1,9 @@
 from functools import wraps
-from typing import Any, Callable, Dict, List, Tuple, Union
+from types import TracebackType
+from typing import Any, Callable, Dict, List, Tuple, Type, Union
 
-import numpy as np
 import dask.array as da
+import numpy as np
 
 try:
     import zarr
@@ -20,10 +21,17 @@ else:
 
 # layer data may be: (data,) (data, meta), or (data, meta, layer_type)
 # using "Any" for the data type until ArrayLike is more mature.
-LayerData = Union[Tuple[Any], Tuple[Any, Dict], Tuple[Any, Dict, str]]
+FullLayerData = Tuple[Any, Dict, str]
+LayerData = Union[Tuple[Any], Tuple[Any, Dict], FullLayerData]
 
 PathLike = Union[str, List[str]]
 ReaderFunction = Callable[[PathLike], List[LayerData]]
+WriterFunction = Callable[[str, List[FullLayerData]], List[str]]
+
+ExcInfo = Union[
+    Tuple[Type[BaseException], BaseException, TracebackType],
+    Tuple[None, None, None],
+]
 
 
 def image_reader_to_layerdata_reader(

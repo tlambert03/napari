@@ -1,4 +1,5 @@
 import numpy as np
+
 from napari.layers import Shapes
 from napari.layers.shapes import _shapes_key_bindings as key_bindings
 
@@ -72,15 +73,15 @@ def test_copy_paste():
 
     assert len(layer.data) == 3
     assert layer._clipboard == {}
-    layer.selected_data = [0, 1]
+    layer.selected_data = {0, 1}
 
     key_bindings.copy(layer)
     assert len(layer.data) == 3
-    assert len(layer._clipboard) == 2
+    assert len(layer._clipboard) == 6
 
     key_bindings.paste(layer)
     assert len(layer.data) == 5
-    assert len(layer._clipboard) == 2
+    assert len(layer._clipboard) == 6
 
 
 def test_select_all():
@@ -101,7 +102,7 @@ def test_delete():
     layer.mode = 'direct'
 
     assert len(layer.data) == 3
-    layer.selected_data = [0, 1]
+    layer.selected_data = {0, 1}
 
     key_bindings.delete_selected(layer)
     assert len(layer.data) == 1

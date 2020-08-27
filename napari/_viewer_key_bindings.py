@@ -1,5 +1,18 @@
 import numpy as np
+
 from .viewer import Viewer
+
+
+@Viewer.bind_key('Control')
+def reset_scroll_progress(viewer):
+    """Reset dims scroll progress"""
+
+    # on key press
+    viewer.dims._scroll_progress = 0
+    yield
+
+    # on key release
+    viewer.dims._scroll_progress = 0
 
 
 @Viewer.bind_key('Control-F')
@@ -23,31 +36,13 @@ def toggle_ndisplay(viewer):
 @Viewer.bind_key('Left')
 def increment_dims_left(viewer):
     """Increment dimensions slider to the left."""
-    axis = viewer.window.qt_viewer.dims.last_used
-    if axis is not None:
-        cur_point = viewer.dims.point[axis]
-        axis_range = viewer.dims.range[axis]
-        new_point = np.clip(
-            cur_point - axis_range[2],
-            axis_range[0],
-            axis_range[1] - axis_range[2],
-        )
-        viewer.dims.set_point(axis, new_point)
+    viewer.dims._increment_dims_left()
 
 
 @Viewer.bind_key('Right')
 def increment_dims_right(viewer):
     """Increment dimensions slider to the right."""
-    axis = viewer.window.qt_viewer.dims.last_used
-    if axis is not None:
-        cur_point = viewer.dims.point[axis]
-        axis_range = viewer.dims.range[axis]
-        new_point = np.clip(
-            cur_point + axis_range[2],
-            axis_range[0],
-            axis_range[1] - axis_range[2],
-        )
-        viewer.dims.set_point(axis, new_point)
+    viewer.dims._increment_dims_right()
 
 
 @Viewer.bind_key('Control-E')
@@ -75,6 +70,7 @@ def focus_axes_down(viewer):
 
 
 @Viewer.bind_key('Control-Backspace')
+@Viewer.bind_key('Control-Delete')
 def remove_selected(viewer):
     """Remove selected layers."""
     viewer.layers.remove_selected()
@@ -87,6 +83,7 @@ def select_all(viewer):
 
 
 @Viewer.bind_key('Control-Shift-Backspace')
+@Viewer.bind_key('Control-Shift-Delete')
 def remove_all_layers(viewer):
     """Remove all layers."""
     viewer.layers.select_all()
@@ -140,3 +137,9 @@ def play(viewer):
     else:
         axis = viewer.window.qt_viewer.dims.last_used or 0
         viewer.window.qt_viewer.dims.play(axis)
+
+
+@Viewer.bind_key('V')
+def toggle_selected_visibility(viewer):
+    """Toggle visibility of selected layers"""
+    viewer.layers.toggle_selected_visibility()

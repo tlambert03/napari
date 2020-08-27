@@ -102,7 +102,7 @@ QtGridViewButton::indicator {
 }
 
 QtGridViewButton::indicator:unchecked {
-  image: url(":/themes/{{ folder }}/new_image.svg");
+  image: url(":/themes/{{ folder }}/square.svg");
 }
 
 QtGridViewButton::indicator:checked {
@@ -196,6 +196,10 @@ QtModeRadioButton[mode="picker"]::indicator {
   image: url(":/themes/{{ folder }}/picker.svg");
 }
 
+QtModeRadioButton[mode="erase"]::indicator {
+    image: url(":/themes/{{ folder }}/erase.svg");
+}
+
 QtModeRadioButton[mode="pan_zoom"]::indicator {
     image: url(":/themes/{{ folder }}/zoom.svg");
 }
@@ -206,6 +210,10 @@ QtModeRadioButton[mode="select_points"]::indicator {
 
 QtModeRadioButton[mode="add_points"]::indicator {
     image: url(":/themes/{{ folder }}/add.svg");
+}
+
+QtModePushButton[mode="shuffle"] {
+   image: url(":/themes/{{ folder }}/shuffle.svg");
 }
 
 QtModePushButton[mode="move_back"] {
@@ -235,9 +243,11 @@ QtCopyToClipboardButton {
    min-height: 18px;
    max-height: 18px;
    border-radius: 3px;
-   image: url(":/themes/{{ folder }}/copy_to_clipboard.svg");
 }
 
+#QtCopyToClipboardButton {
+  image: url(":/themes/{{ folder }}/copy_to_clipboard.svg");
+}
 
 QtPlayButton {
   border-radius: 2px;
@@ -266,14 +276,9 @@ QtPlayButton[playing=True]:hover {
 }
 
 QtPlayButton[playing=True] {
-    image: url(":/themes/{{ folder }}/new_image.svg");
+    image: url(":/themes/{{ folder }}/square.svg");
     background-color: {{ warning }};
     height: 12px;
     width: 12px;
     padding: 2px;
-}
-
-#shuffleButton {
-  font-size: 11pt;
-  margin-bottom: 4px;
 }

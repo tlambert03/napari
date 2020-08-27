@@ -1,4 +1,5 @@
 from enum import auto
+
 from ...utils.misc import StringEnum
 
 
@@ -28,15 +29,22 @@ class Interpolation(StringEnum):
     SPLINE36 = auto()
 
 
+class Interpolation3D(StringEnum):
+    """INTERPOLATION: Vispy interpolation mode for volume rendering."""
+
+    LINEAR = auto()
+    NEAREST = auto()
+
+
 class Rendering(StringEnum):
     """Rendering: Rendering mode for the layer.
 
     Selects a preset rendering mode in vispy
             * translucent: voxel colors are blended along the view ray until
               the result is opaque.
-            * mip: maxiumum intensity projection. Cast a ray and display the
+            * mip: maximum intensity projection. Cast a ray and display the
               maximum value that was encountered.
-            * attenuated_mip: attenuated maxiumum intensity projection. Cast a
+            * attenuated_mip: attenuated maximum intensity projection. Cast a
               ray and attenuate values based on integral of encountered values,
               display the maximum value that was encountered after attenuation.
               This will make nearer objects appear more prominent.
