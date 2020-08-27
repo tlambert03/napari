@@ -1,4 +1,3 @@
-import os
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -8,11 +7,19 @@ from vispy.color import get_colormap, get_colormaps
 from .colormap import Colormap
 from .vendored import cm, colorconv
 
-_matplotlib_list_file = os.path.join(
-    os.path.dirname(__file__), 'matplotlib_cmaps.txt'
-)
-with open(_matplotlib_list_file) as fin:
-    matplotlib_colormaps = [line.rstrip() for line in fin]
+matplotlib_colormaps = [
+    'viridis',
+    'magma',
+    'inferno',
+    'plasma',
+    'gray',
+    'hsv',
+    'turbo',
+    'twilight',
+    'twilight_shifted',
+    'gist_earth',
+    'PiYG',
+]
 
 
 ValidColormapArg = Union[

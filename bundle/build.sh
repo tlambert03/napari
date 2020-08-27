@@ -10,7 +10,7 @@ rm -rf dist
 echo "installing build tools..."
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    pip install pyinstaller==3.6;
+    pip install pyinstaller==4.0;
 else
     # 3.5 seems to be required for PySide2 on linux, otherwise, in 3.4
     # it fails to find python in run-time hook 'pyi_rth_qt5plugins.py'
@@ -55,16 +55,16 @@ if [ -d "dist/napari.app/Contents/MacOS/PySide2" ]; then
 fi
 
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "creating mac .dmg ..."
-    mkdir dist/dmg
-    ln -s /Applications dist/dmg
-    cp -r dist/napari.app dist/dmg
-    hdiutil create dist/napari.dmg -srcfolder dist/dmg
-    rm -rf dist/dmg
-    rm -rf dist/napari
+# if [[ "$OSTYPE" == "darwin"* ]]; then
+#     echo "creating mac .dmg ..."
+#     mkdir dist/dmg
+#     ln -s /Applications dist/dmg
+#     cp -r dist/napari.app dist/dmg
+#     hdiutil create dist/napari.dmg -srcfolder dist/dmg
+#     rm -rf dist/dmg
+#     rm -rf dist/napari
 
-    # broken pkg building command
-    # productbuild --component ./dist/napari.app /Applications napari.pkg \
-    #   --sign "3rd Party Mac Developer Installer: napari team"
-fi
+#     # broken pkg building command
+#     # productbuild --component ./dist/napari.app /Applications napari.pkg \
+#     #   --sign "3rd Party Mac Developer Installer: napari team"
+# fi
