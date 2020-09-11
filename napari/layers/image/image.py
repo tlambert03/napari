@@ -592,7 +592,28 @@ class Image(IntensityVisualizationMixin, Layer):
         image : array
             Displayed array.
         """
-        image = raw
+
+        if self.is_complex:
+            # ComplexRendering.COLORMAP mode uses the contrast limits sliders
+            # to control the range of phase information shown, and the gamma
+            # slider to change mag->intensity linearity.
+            if self.complex_rendering == ComplexRendering.COLORMAP:
+                image = self.complex_rendering(
+                    raw,
+                    colormap=self._colormap_name,
+                    gamma=self.gamma,
+                    phase_range=self.contrast_limits,
+                )
+
+            else:
+                image = self.complex_rendering(raw)
+
+            if self.complex_rendering in ComplexRendering.rgb_members():
+                self.rgb = True
+            else:
+                self.rgb = False
+        else:
+            image = raw
         return image
 
     def _set_view_slice(self):
