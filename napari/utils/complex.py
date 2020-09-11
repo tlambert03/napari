@@ -1,9 +1,11 @@
 from typing import Optional, Tuple
+
 import numpy as np
 from skimage.color import hsv2rgb
-from ..utils.colormaps.colormaps import (
-    vispy_or_mpl_colormap,
+
+from ..utils.colormaps.colormap_utils import (
     AVAILABLE_COLORMAPS,
+    vispy_or_mpl_colormap,
 )
 
 

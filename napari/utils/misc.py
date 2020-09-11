@@ -1,15 +1,52 @@
 """Miscellaneous utility functions.
 """
-import os.path as osp
-from enum import Enum, EnumMeta
-import re
+import collections.abc
 import inspect
 import itertools
+import re
+from enum import Enum, EnumMeta
+from os import PathLike, fspath, path
+from typing import Optional, Sequence, Type, TypeVar
+from urllib.parse import urlparse
+
 import numpy as np
-from typing import Type
+
+ROOT_DIR = path.dirname(path.dirname(__file__))
+
+try:
+    from importlib import metadata as importlib_metadata
+except ImportError:
+    import importlib_metadata  # type: ignore
 
 
-ROOT_DIR = osp.dirname(osp.dirname(__file__))
+def running_as_bundled_app() -> bool:
+    """Infer whether we are running as a briefcase bundle"""
+    # https://github.com/beeware/briefcase/issues/412
+    # https://github.com/beeware/briefcase/pull/425
+    # this assumes the name of the app stays "napari"
+    return importlib_metadata.metadata("napari").get("App-ID") is not None
+
+
+def in_jupyter() -> bool:
+    """Return true if we're running in jupyter notebook/lab or qtconsole."""
+    try:
+        from IPython import get_ipython
+
+        return get_ipython().__class__.__name__ == 'ZMQInteractiveShell'
+    except Exception:
+        pass
+    return False
+
+
+def in_ipython() -> bool:
+    """Return true if we're running in an IPython interactive shell."""
+    try:
+        from IPython import get_ipython
+
+        return get_ipython().__class__.__name__ == 'TerminalInteractiveShell'
+    except Exception:
+        pass
+    return False
 
 
 def str_to_rgb(arg):
@@ -54,6 +91,62 @@ def is_iterable(arg, color=False):
 def guess_complex(obj):
     """Dask-safe way to check whether an array is complex."""
     return getattr(obj, 'dtype', None) in (np.complex64, np.complex128)
+
+
+def is_sequence(arg):
+    """Check if ``arg`` is a sequence like a list or tuple.
+
+    return True:
+        list
+        tuple
+    return False
+        string
+        numbers
+        dict
+        set
+    """
+    if isinstance(arg, collections.abc.Sequence) and not isinstance(arg, str):
+        return True
+    return False
+
+
+def ensure_sequence_of_iterables(obj, length: Optional[int] = None):
+    """Ensure that ``obj`` behaves like a (nested) sequence of iterables.
+
+    If length is provided and the object is already a sequence of iterables,
+    a ValueError will be raised if ``len(obj) != length``.
+
+    Parameters
+    ----------
+    obj : Any
+        the object to check
+    length : int, optional
+        If provided, assert that obj has len ``length``, by default None
+
+    Returns
+    -------
+    iterable
+        nested sequence of iterables, or an itertools.repeat instance
+
+    Examples
+    --------
+    In [1]: ensure_sequence_of_iterables([1, 2])
+    Out[1]: repeat([1, 2])
+
+    In [2]: ensure_sequence_of_iterables([(1, 2), (3, 4)])
+    Out[2]: [(1, 2), (3, 4)]
+
+    In [3]: ensure_sequence_of_iterables({'a':1})
+    Out[3]: repeat({'a': 1})
+
+    In [4]: ensure_sequence_of_iterables(None)
+    Out[4]: repeat(None)
+    """
+    if obj and is_sequence(obj) and is_iterable(obj[0]):
+        if length is not None and len(obj) != length:
+            raise ValueError(f"length of {obj} must equal {length}")
+        return obj
+    return itertools.repeat(obj)
 
 
 def formatdoc(obj):
@@ -129,11 +222,51 @@ class StringEnum(Enum, metaclass=StringEnumMeta):
 
 
 camel_to_snake_pattern = re.compile(r'(.)([A-Z][a-z]+)')
+camel_to_spaces_pattern = re.compile(
+    r"((?<=[a-z])[A-Z]|(?<!\A)[A-R,T-Z](?=[a-z]))"
+)
 
 
 def camel_to_snake(name):
     # https://gist.github.com/jaytaylor/3660565
     return camel_to_snake_pattern.sub(r'\1_\2', name).lower()
+
+
+def camel_to_spaces(val):
+    return camel_to_spaces_pattern.sub(r" \1", val)
+
+
+T = TypeVar('T', str, Sequence[str])
+
+
+def abspath_or_url(relpath: T) -> T:
+    """Utility function that normalizes paths or a sequence thereof.
+
+    Expands user directory and converts relpaths to abspaths... but ignores
+    URLS that begin with "http", "ftp", or "file".
+
+    Parameters
+    ----------
+    relpath : str or list or tuple
+        A path, or list or tuple of paths.
+
+    Returns
+    -------
+    abspath : str or list or tuple
+        An absolute path, or list or tuple of absolute paths (same type as
+        input).
+    """
+    if isinstance(relpath, (tuple, list)):
+        return type(relpath)(abspath_or_url(p) for p in relpath)
+
+    if isinstance(relpath, (str, PathLike)):
+        relpath = fspath(relpath)
+        urlp = urlparse(relpath)
+        if urlp.scheme and urlp.netloc:
+            return relpath
+        return path.abspath(path.expanduser(relpath))
+
+    raise TypeError("Argument must be a string, PathLike, or sequence thereof")
 
 
 class CallDefault(inspect.Parameter):

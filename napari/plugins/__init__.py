@@ -1,11 +1,26 @@
-from pluggy import HookimplMarker
+import os
+import sys
 
-from .manager import NapariPluginManager
+from napari_plugin_engine import PluginManager
 
-# Marker to be imported and used in plugins (and for own implementations)
-# Note: plugins may also just import pluggy directly and make their own
-# napari_hook_implementation.
-napari_hook_implementation = HookimplMarker("napari")
+from ..utils._appdirs import user_site_packages
+from ..utils.misc import running_as_bundled_app
+from . import _builtins, hook_specifications
+
+if sys.platform.startswith('linux') and running_as_bundled_app():
+    sys.path.append(user_site_packages())
+
 
 # the main plugin manager instance for the `napari` plugin namespace.
-plugin_manager = NapariPluginManager()
+plugin_manager = PluginManager(
+    'napari', discover_entry_point='napari.plugin', discover_prefix='napari_'
+)
+with plugin_manager.discovery_blocked():
+    plugin_manager.add_hookspecs(hook_specifications)
+    plugin_manager.register(_builtins, name='builtins')
+
+
+__all__ = [
+    "PluginManager",
+    "plugin_manager",
+]
