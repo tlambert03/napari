@@ -29,6 +29,7 @@ def complex2rgb(
     scale: Tuple[OptInt, OptInt, OptInt] = (1, 1, 1),
     rmax: Optional[float] = None,
     phase_shift: float = np.pi,
+    **kwargs,
 ) -> np.ndarray:
     """Convert complex array to RGB array.
 
