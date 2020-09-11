@@ -124,6 +124,6 @@ def complex2colormap(
     # scale intensity of RGB image by the magnitude component
     absmax = rmax or np.abs(arr).max()
     intensity = np.clip(np.abs(arr) / absmax, 0, 1) ** gamma
-    RGB = (RGB * np.expand_dims(intensity, 2)).astype(np.uint8)
+    RGB = (RGB * intensity[..., np.newaxis]).astype(np.uint8)
 
     return RGB
