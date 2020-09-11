@@ -823,6 +823,25 @@ class Image(IntensityVisualizationMixin, Layer):
                 else:
                     alpha = np.full(downsampled.shape[:2] + (1,), self.opacity)
                 colormapped = np.concatenate([downsampled, alpha], axis=2)
+        elif self.is_complex:
+            zoom_factor_int = np.clip(
+                np.round(1 / np.array(zoom_factor)).astype(int), 1, None
+            )
+            downsampled = image[
+                tuple(slice(None, None, z) for z in zoom_factor_int)
+            ]
+            if self.complex_rendering == ComplexRendering.COLORMAP:
+                colormapped = self.complex_rendering(
+                    downsampled,
+                    colormap=self._colormap_name,
+                    gamma=self.gamma,
+                    phase_range=self.contrast_limits,
+                )
+            else:
+                precolormapped = self.complex_rendering(downsampled)
+                color_array = self.colormap.map(precolormapped.ravel())
+                colormapped = color_array.reshape(downsampled.shape + (4,))
+                colormapped[..., 3] *= self.opacity
         else:
             # warning filter can be removed with scipy 1.4
             with warnings.catch_warnings():
