@@ -78,7 +78,9 @@ def complex2rgb(
         else:
             HSV[..., i] = scale[i] if scale[i] is not None else 1
 
-    return hsv2rgb(HSV)
+    rgb = hsv2rgb(HSV)
+    rgba = np.concatenate((rgb, np.ones(arr.shape + (1,))), axis=-1)
+    return rgba
 
 
 def complex2colormap(
@@ -116,14 +118,14 @@ def complex2colormap(
     else:
         cmap = vispy_or_mpl_colormap(colormap)
 
-    # create RGB image from phase information
+    # create RGBA image from phase information
     p0, p1 = phase_range
     phase = (np.angle(arr) - p0) / (p1 - p0)
-    RGB = cmap[phase.ravel()].RGB.reshape(phase.shape + (3,))
+    RGB = cmap.map(phase.ravel()).reshape(phase.shape + (4,))
 
     # scale intensity of RGB image by the magnitude component
     absmax = rmax or np.abs(arr).max()
     intensity = np.clip(np.abs(arr) / absmax, 0, 1) ** gamma
-    RGB = (RGB * intensity[..., np.newaxis]).astype(np.uint8)
+    RGB *= intensity[..., np.newaxis]
 
-    return RGB
+    return (RGB * 255).astype(np.uint8)

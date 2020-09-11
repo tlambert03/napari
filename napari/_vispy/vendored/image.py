@@ -114,7 +114,7 @@ _c2l = 'float cmap(vec4 color) { return (color.r + color.g + color.b) / 3.; }'
 
 
 def _build_color_transform(data, clim, gamma, cmap):
-    if data.ndim == 2 or data.shape[2] == 1:
+    if cmap and (data.ndim == 2 or data.shape[2] == 1):
         fclim = Function(_apply_clim_float)
         fgamma = Function(_apply_gamma_float)
         fun = FunctionChain(
@@ -174,6 +174,21 @@ class ImageVisual(Visual):
             * 'hanning', 'hamming', 'hermite', 'kaiser', 'quadric', 'bicubic',
                 'catrom', 'mitchell', 'spline16', 'spline36', 'gaussian',
                 'bessel', 'sinc', 'lanczos', 'blackman'
+    complex : str
+        rendering mode for complex data
+            "grayscale" settings:
+                * 'magnitude': uses np.abs
+                * 'phase': uses np.angle
+                * 'real': uses np.real
+                * 'imaginary': uses np.imag
+            "colormapped" settings: (convert complex values into RGB images)
+                * 'colormap'
+                * 'p2h_m2s'
+                * 'p2h_m2v'
+                * 'p2h_m2sv'
+                * 'm2h_p2s'
+                * 'm2h_p2v'
+                * 'm2h_p2sv'
 
     **kwargs : dict
         Keyword arguments to pass to `Visual`.
@@ -184,6 +199,25 @@ class ImageVisual(Visual):
     if the data are 2D.
     """
 
+    _gray_complex_modes = {
+        'magnitude',
+        'phase',
+        'real',
+        'imaginary',
+    }
+    _colored_complex_modes = {
+        'colormap',
+        'p2h_m2s',
+        'p2h_m2v',
+        'p2h_m2sv',
+        'm2h_p2s',
+        'm2h_p2v',
+        'm2h_p2sv',
+    }
+    _complex_rendering_names = _gray_complex_modes.union(
+        _colored_complex_modes
+    )
+
     def __init__(
         self,
         data=None,
@@ -193,6 +227,7 @@ class ImageVisual(Visual):
         clim='auto',
         gamma=1.0,
         interpolation='nearest',
+        complex_rendering='magnitude',
         **kwargs,
     ):
         self._data = None
@@ -237,6 +272,7 @@ class ImageVisual(Visual):
             )
 
         self._interpolation = interpolation
+        self._complex_rendering = complex_rendering
 
         # check texture interpolation
         if self._interpolation == 'bilinear':
@@ -328,6 +364,8 @@ class ImageVisual(Visual):
             ):
                 self._need_texture_upload = True
         self._clim = clim
+        if np.iscomplexobj(self._data):
+            self._need_texture_upload = True
         if self._texture_limits is not None:
             self.shared_program.frag['color_transform'][1][
                 'clim'
@@ -401,6 +439,27 @@ class ImageVisual(Visual):
             self._interpolation = i
             self._need_interpolation_update = True
             self.update()
+
+    @property
+    def complex_rendering(self):
+        return self._complex_rendering
+
+    @complex_rendering.setter
+    def complex_rendering(self, val):
+        if val.lower() not in self._complex_rendering_names:
+            raise ValueError(
+                "complex_rendering must be one of %s"
+                % ', '.join(self._complex_rendering_names)
+            )
+        if self._complex_rendering != val:
+            self._complex_rendering = val
+            self._need_texture_upload = True
+            self._need_colortransform_update = True
+            self.update()
+
+    @property
+    def complex_modes(self):
+        return self._complex_rendering_names
 
     @property
     def interpolation_functions(self):
@@ -491,6 +550,15 @@ class ImageVisual(Visual):
 
     def _build_texture(self):
         data = self._data
+        if np.iscomplexobj(data):
+            from napari.layers.image._image_constants import ComplexRendering
+
+            data = ComplexRendering(self.complex_rendering)(
+                data,
+                # colormap=self.colormap.name,
+                gamma=self.gamma,
+                phase_range=self.clim,
+            )
         if data.dtype == np.float64:
             data = data.astype(np.float32)
 
@@ -545,10 +613,16 @@ class ImageVisual(Visual):
 
         if self._need_colortransform_update:
             prg = view.view_program
+            cmap = (
+                None
+                if self.complex_rendering in self._colored_complex_modes
+                else self.cmap
+            )
+
             self.shared_program.frag[
                 'color_transform'
             ] = _build_color_transform(
-                self._data, self.clim_normalized, self.gamma, self.cmap
+                self._data, self.clim_normalized, self.gamma, cmap
             )
             self._need_colortransform_update = False
             prg['texture2D_LUT'] = (

@@ -150,6 +150,7 @@ class Image(IntensityVisualizationMixin, Layer):
         contrast_limits=None,
         gamma=1,
         interpolation='nearest',
+        complex_rendering='magnitude',
         rendering='mip',
         iso_threshold=0.5,
         attenuation=0.05,
@@ -211,7 +212,7 @@ class Image(IntensityVisualizationMixin, Layer):
         self.is_complex = (
             guess_complex(data[0]) if self.multiscale else guess_complex(data)
         )
-        self.complex_rendering = 'magnitude'
+        self.complex_rendering = complex_rendering
         self._data = data
         if self.multiscale:
             self._data_level = len(self.data) - 1
@@ -298,7 +299,7 @@ class Image(IntensityVisualizationMixin, Layer):
         else:
             input_data = self.data
         if self.is_complex:
-            input_data = self.complex_rendering(input_data)
+            input_data = self._complex_rendering(input_data)
         return calc_data_range(input_data)
 
     @property
@@ -459,9 +460,9 @@ class Image(IntensityVisualizationMixin, Layer):
         self.events.rendering()
 
     @property
-    def complex_rendering(self) -> Union[ComplexRendering, Callable]:
+    def complex_rendering(self) -> str:
         """Mode for converting complex values to real values."""
-        return self._complex_render
+        return str(self._complex_rendering)
 
     @complex_rendering.setter
     def complex_rendering(
@@ -492,56 +493,38 @@ class Image(IntensityVisualizationMixin, Layer):
             If a callable is provided that does not return a real numpy.array
             when provided a complex numpy.array
         """
-        if isinstance(value, str):
-            try:
-                value = getattr(ComplexRendering, value.upper())
-            except AttributeError:
-                opt = ComplexRendering.lower_members()
-                raise KeyError(
-                    f"string values for `complex_rendering` must be one of {opt}"
-                )
+        _value = ComplexRendering(value)
 
-        if not isinstance(value, ComplexRendering):
-            test_arr = np.ones(1).astype(np.complex)
-            if not (callable(value) and np.isrealobj(value(test_arr))):
-                raise ValueError(
-                    "The value for `complex_rendering` must be either a string"
-                    " or a callable function that accepts a complex array and "
-                    "returns a real array."
-                )
-        elif value == ComplexRendering.COLORMAP:
+        if _value == ComplexRendering.COLORMAP:
             # the colormap mode hijacks the colormap, clims, and gamma sliders
             # so we store the previous colormap for later retrieval and use
             # the twilight_shifted colormap by default
-            self._previous_cmap = self._colormap_name
+            self._previous_cmap = self.colormap
             self.colormap = 'twilight_shifted'
         else:
             if hasattr(self, '_previous_cmap'):
                 self.colormap = self._previous_cmap
                 del self._previous_cmap
-            self.events.contrast_limits.disconnect(self.refresh)
-            self.events.colormap.disconnect(self.refresh)
-            self.events.gamma.disconnect(self.refresh)
 
-        self._complex_render = value
-        if hasattr(self, '_data'):
-            # for PHASE and COLORMAP, the contrast limits sliders are used to
-            # control phase display, so set their min/max accordingly
-            if value in (ComplexRendering.PHASE, ComplexRendering.COLORMAP):
-                self.contrast_limits = [-np.pi, np.pi]
-                self.contrast_limits_range = [-np.pi, np.pi]
-            # otherwise autoscale the image back to regular values
-            else:
+        self._complex_rendering = _value
+
+        # for PHASE and COLORMAP, the contrast limits sliders are used to
+        # control phase display, so set their min/max accordingly
+        if _value in (ComplexRendering.PHASE, ComplexRendering.COLORMAP):
+            self.contrast_limits = [-np.pi, np.pi]
+            self.contrast_limits_range = [-np.pi, np.pi]
+        # otherwise autoscale the image back to regular values
+        else:
+            if hasattr(self, '_data'):
                 self.reset_contrast_limits()
                 self.contrast_limits_range = self.contrast_limits
-            self.events.complex_rendering()
-            self.refresh()
+        self.events.complex_rendering()
 
-        # connect these events AFTER self.refresh() to avoid excessive redraws
-        if value == ComplexRendering.COLORMAP:
-            self.events.contrast_limits.connect(self.refresh)
-            self.events.colormap.connect(self.refresh)
-            self.events.gamma.connect(self.refresh)
+        # # connect these events AFTER self.refresh() to avoid excessive redraws
+        # if value == ComplexRendering.COLORMAP:
+        #     self.events.contrast_limits.connect(self.refresh)
+        #     self.events.colormap.connect(self.refresh)
+        #     self.events.gamma.connect(self.refresh)
 
     @property
     def loaded(self):
@@ -592,29 +575,7 @@ class Image(IntensityVisualizationMixin, Layer):
         image : array
             Displayed array.
         """
-
-        if self.is_complex:
-            # ComplexRendering.COLORMAP mode uses the contrast limits sliders
-            # to control the range of phase information shown, and the gamma
-            # slider to change mag->intensity linearity.
-            if self.complex_rendering == ComplexRendering.COLORMAP:
-                image = self.complex_rendering(
-                    raw,
-                    colormap=self._colormap_name,
-                    gamma=self.gamma,
-                    phase_range=self.contrast_limits,
-                )
-
-            else:
-                image = self.complex_rendering(raw)
-
-            if self.complex_rendering in ComplexRendering.rgb_members():
-                self.rgb = True
-            else:
-                self.rgb = False
-        else:
-            image = raw
-        return image
+        return raw
 
     def _set_view_slice(self):
         """Set the view given the indices to slice with."""
@@ -851,15 +812,20 @@ class Image(IntensityVisualizationMixin, Layer):
             downsampled = image[
                 tuple(slice(None, None, z) for z in zoom_factor_int)
             ]
-            if self.complex_rendering == ComplexRendering.COLORMAP:
-                colormapped = self.complex_rendering(
+
+            if self._complex_rendering == ComplexRendering.COLORMAP:
+                precolormapped = self._complex_rendering(
                     downsampled,
-                    colormap=self._colormap_name,
+                    colormap=self.colormap.name,
                     gamma=self.gamma,
                     phase_range=self.contrast_limits,
                 )
             else:
-                precolormapped = self.complex_rendering(downsampled)
+                precolormapped = self._complex_rendering(downsampled)
+
+            if self._complex_rendering in ComplexRendering.rgb_members():
+                colormapped = precolormapped
+            else:
                 color_array = self.colormap.map(precolormapped.ravel())
                 colormapped = color_array.reshape(downsampled.shape + (4,))
                 colormapped[..., 3] *= self.opacity
