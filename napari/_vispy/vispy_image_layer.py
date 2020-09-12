@@ -19,7 +19,9 @@ texture_dtypes = [
 class VispyImageLayer(VispyBaseLayer):
     def __init__(self, layer):
         self._image_node = ImageNode(None, method='auto')
-        self._volume_node = VolumeNode(np.zeros((1, 1, 1)), clim=[0, 1])
+        self._volume_node = VolumeNode(
+            np.zeros((1, 1, 1)), clim=[0, 1], texture_float=True
+        )
         super().__init__(layer, self._image_node)
 
         self.layer.events.rendering.connect(self._on_rendering_change)
