@@ -2,11 +2,8 @@ from vispy.color import get_colormap
 from vispy.scene.visuals import create_visual_node
 from vispy.visuals.shaders import Function
 
-from .vendored import VolumeVisual as BaseVolumeVisual
+from .vendored import VolumeVisual as _VolumeVisual
 from .vendored.volume import FRAG_SHADER, frag_dict
-
-BaseVolume = create_visual_node(BaseVolumeVisual)
-
 
 ATTENUATED_MIP_SNIPPETS = dict(
     before_loop="""
@@ -35,7 +32,7 @@ frag_dict['attenuated_mip'] = ATTENUATED_MIP_FRAG_SHADER
 
 
 # Custom volume class is needed for better 3D rendering
-class Volume(BaseVolume):
+class VolumeVisual(_VolumeVisual):
     def __init__(self, *args, **kwargs):
         self._attenuation = 1.0
         super().__init__(*args, **kwargs)
@@ -79,5 +76,11 @@ class Volume(BaseVolume):
     def attenuation(self, value):
         # Fix for #1399, should be fixed in the VisPy threshold setter
         self._attenuation = float(value)
-        self.shared_program['u_attenuation'] = self._attenuation
+        attenuation = self._attenuation
+        if self._texture_float:
+            attenuation /= 100  # TODO: empirically chosen magic number...
+        self.shared_program['u_attenuation'] = attenuation
         self.update()
+
+
+Volume = create_visual_node(VolumeVisual)
