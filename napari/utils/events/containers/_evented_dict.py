@@ -3,7 +3,7 @@
 Note For Developers
 ===================
 
-Be cautious when re-implementing typical dict-like methods here (e.g. extend,
+Be cautious when re-implementing typical dict-like methods here (e.g. update,
 pop, clear, etc...).  By not re-implementing those methods, we force ALL "CRUD"
 (create, read, update, delete) operations to go through a few key methods
 defined by the abc.MutableMapping interface, where we can emit the necessary
@@ -30,11 +30,32 @@ _VT = TypeVar("_VT")
 
 
 class EventedDict(MutableMapping[_KT, _VT]):
+    """A mutable mapping (dict-like) class that emits events when mutated.
+
+    Parameters
+    ----------
+    *args : mapping or iterable
+        passed to ``dict()`` constructor
+    **kwargs
+        name=value pairs, passed to ``dict()`` constructor
+
+    Examples
+    --------
+    EventedDict() -> new empty dictionary
+    EventedDict(mapping) -> new dictionary initialized from a mapping object's
+        (key, value) pairs
+    EventedDict(iterable) -> new dictionary initialized as if via:
+        d = {}
+        for k, v in iterable:
+            d[k] = v
+    EventedDict(**kwargs) -> new dictionary initialized with name=value pairs
+        in the keyword argument list.  For example:  EventedDict(one=1, two=2)
+    """
+
     NOKEY = object()
     events: EmitterGroup
 
-    def __init__(self, data: dict = None):
-
+    def __init__(self, *args, **kwargs):
         _events = {
             'set': None,  # int
             'deleted': None,  # int
@@ -47,7 +68,7 @@ class EventedDict(MutableMapping[_KT, _VT]):
             # otherwise create a new one
             self.events = EmitterGroup(source=self, **_events)
 
-        self._dict = dict(data) if data else {}
+        self._dict = dict(*args, **kwargs)
 
     def __getitem__(self, key: Any):
         return self._dict.__getitem__(key)
@@ -72,8 +93,8 @@ class EventedDict(MutableMapping[_KT, _VT]):
         return repr(self._dict)
 
     @classmethod
-    def __newlike__(cls, data: dict):
-        return cls(data)
+    def __newlike__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
 
     def copy(self) -> 'EventedDict[_KT, _VT]':
         """Return a shallow copy of the dict."""
