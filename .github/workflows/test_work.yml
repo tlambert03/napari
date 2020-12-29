@@ -7,7 +7,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
     - id: set-matrix
-      run: echo "::set-output name=matrix::{\"os\":[\"ubuntu-latest\", \"ubuntu-latest\"]}"
+      run: echo "::set-output name=matrix::{\"os\":[\"ubuntu-latest\", \"windows-latest\", \"macos-latest\"]}"
 
   job2:
     needs: job1
