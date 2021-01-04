@@ -750,13 +750,17 @@ class Window:
         if dial.exec_():
             self._last_visited_dir = os.path.dirname(dial.selectedFiles()[0])
 
-    def screenshot(self, path=None):
+    def screenshot(self, path: str = None, *, canvas_only: bool = True):
         """Take currently displayed viewer and convert to an image array.
 
         Parameters
         ----------
         path : str
             Filename for saving screenshot image.
+        canvas_only : bool
+            If True, screenshot shows only the image display canvas, and
+            if False include the napari viewer frame in the screenshot,
+            By default, True.
 
         Returns
         -------
@@ -764,10 +768,15 @@ class Window:
             Numpy array of type ubyte and shape (h, w, 4). Index [0, 0] is the
             upper-left corner of the rendered region.
         """
-        img = self._qt_window.grab().toImage()
+        if canvas_only:
+            image = self.qt_viewer.screenshot(path=path)
+        else:
+            image = self._qt_window.grab().toImage()
+
+        array = QImg2array(image)
         if path is not None:
-            imsave(path, QImg2array(img))  # scikit-image imsave method
-        return QImg2array(img)
+            imsave(path, array)  # scikit-image imsave method
+        return array
 
     def close(self):
         """Close the viewer window and cleanup sub-widgets."""
@@ -792,6 +801,11 @@ class Window:
         self._qt_window.close()
         del self._qt_window
 
+    def update_console(self, variables):
+        if self.qt_viewer.console is None:
+            return
+        self.qt_viewer.console.push(variables)
+
 
 def _stop_monitor() -> None:
     """Stop the monitor service if we were using it."""
@@ -806,4 +820,5 @@ def _shutdown_chunkloader() -> None:
     if config.async_loading:
         from ..components.experimental.chunk import chunk_loader
 
-        chunk_loader.shutdown()
+        if chunk_loader:
+            chunk_loader.shutdown()

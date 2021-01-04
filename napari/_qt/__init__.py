@@ -44,3 +44,5 @@ from .widgets.qt_range_slider import QHRangeSlider, QVRangeSlider
 
 path, loader = import_resources()
 loader()
+
+__all__ = ['gui_qt', 'Window']

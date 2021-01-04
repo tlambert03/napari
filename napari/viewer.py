@@ -1,3 +1,5 @@
+from typing import Type
+
 from . import __version__
 from .components import ViewerModel
 from .utils import config
@@ -46,9 +48,9 @@ class Viewer(ViewerModel):
         )
         # having this import here makes all of Qt imported lazily, upon
         # instantiating the first Viewer.
-        from .window import Window
+        from .window import Window, WindowProtocol
 
-        self.window = Window(self, show=show)
+        self.window: Type[WindowProtocol] = Window(self, show=show)
 
     def update_console(self, variables):
         """Update console's namespace with desired variables.
@@ -63,10 +65,7 @@ class Viewer(ViewerModel):
             give (list/tuple/str) then the variable values looked up in the
             callers frame.
         """
-        if self.window.qt_viewer.console is None:
-            return
-        else:
-            self.window.qt_viewer.console.push(variables)
+        self.window.update_console(variables)
 
     def screenshot(self, path=None, *, canvas_only=True):
         """Take currently displayed screen and convert to an image array.
@@ -86,11 +85,7 @@ class Viewer(ViewerModel):
             Numpy array of type ubyte and shape (h, w, 4). Index [0, 0] is the
             upper-left corner of the rendered region.
         """
-        if canvas_only:
-            image = self.window.qt_viewer.screenshot(path=path)
-        else:
-            image = self.window.screenshot(path=path)
-        return image
+        return self.window.screenshot(path=path, canvas_only=canvas_only)
 
     def show(self):
         """Resize, show, and raise the viewer window."""
