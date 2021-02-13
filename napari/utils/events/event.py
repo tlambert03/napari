@@ -685,15 +685,15 @@ class EmitterGroup(EventEmitter):
         self._emitters_connected = False
         self.add(**emitters)
 
-    # mypy fix for dynamic attribute access
-    def __getattr__(self, name: str) -> Any:
-        if name in self._deprecated:
-            warnings.warn(
-                f"emitter {name} is deprecated, {self._deprecated[name]} provided instead",
-                category=FutureWarning,
-            ),
-            return object.__getattribute__(self, self._deprecated[name])
-        return object.__getattribute__(self, name)
+    # # mypy fix for dynamic attribute access
+    # def __getattr__(self, name: str) -> Any:
+    #     if name in self._deprecated:
+    #         warnings.warn(
+    #             f"emitter {name} is deprecated, {self._deprecated[name]} provided instead",
+    #             category=FutureWarning,
+    #         ),
+    #         return object.__getattribute__(self, self._deprecated[name])
+    #     return object.__getattribute__(self, name)
 
     def __getitem__(self, name):
         """

@@ -101,6 +101,7 @@ class EventedModel(BaseModel, metaclass=EventedMetaclass):
         # a dict used to customise the way types are encoded to JSON
         # https://pydantic-docs.helpmanual.io/usage/exporting_models/#modeljson
         json_encoders = JSON_ENCODERS
+        extra = 'allow'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
