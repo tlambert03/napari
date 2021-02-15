@@ -95,6 +95,8 @@ class ViewerModel(KeymapProvider, MousemapProvider, EventedModel):
     _canvas_size = (600, 800)
 
     def __init__(self, title='napari', ndisplay=2, order=(), axis_labels=()):
+        KeymapProvider.__init__(self)
+        MousemapProvider.__init__(self)
         super().__init__()
 
         # Set initial values
