@@ -176,6 +176,9 @@ def test_changing_theme(make_napari_viewer):
     assert viewer.theme == 'light'
 
     screenshot_light = viewer.screenshot(canvas_only=False)
+
+    print(screenshot_dark.shape)
+    print(screenshot_light.shape)
     equal = (screenshot_dark == screenshot_light).min(-1)
 
     # more than 99.5% of the pixels have changed
