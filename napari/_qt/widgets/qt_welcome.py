@@ -34,13 +34,8 @@ class QtWelcomeWidget(QWidget):
         super().__init__(parent)
 
         # Create colored icon using theme
-        icon = QColoredSVGIcon.from_resources('logo_silhouette')
         self._image = QLabel()
-        self._image.setPixmap(
-            icon.colored(
-                theme=SETTINGS.appearance.theme, theme_key='secondary'
-            ).pixmap(300, 300)
-        )
+        SETTINGS.appearance.events.connect(self._update)
         self._label = QtWelcomeLabel(
             trans._(
                 "Drag image(s) here to open\nor\nUse the menu shortcuts below:"
@@ -80,6 +75,16 @@ class QtWelcomeWidget(QWidget):
         layout.addStretch()
 
         self.setLayout(layout)
+
+        self._update()
+
+    def _update(self, event=None):
+        icon = QColoredSVGIcon.from_resources('logo_silhouette')
+        self._image.setPixmap(
+            icon.colored(
+                theme=SETTINGS.appearance.theme, theme_key='background'
+            ).pixmap(300, 300)
+        )
 
     def paintEvent(self, event):
         """Override Qt method.
