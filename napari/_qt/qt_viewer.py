@@ -469,7 +469,6 @@ class QtViewer(QSplitter):
         ----------
         event : napari.utils.event.Event
             The napari event that triggered this method.
-
         """
         if self._welcome:
             if len(self.viewer.layers) > 0:
