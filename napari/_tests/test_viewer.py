@@ -185,7 +185,6 @@ def test_changing_theme(make_napari_viewer, qtbot):
     print(screenshot_light.shape)
     equal = (screenshot_dark == screenshot_light).min(-1)
 
-    assert False
     # more than 99.5% of the pixels have changed
     assert (np.count_nonzero(equal) / equal.size) < 0.05, "Themes too similar"
 
