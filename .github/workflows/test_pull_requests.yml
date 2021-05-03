@@ -1,7 +1,7 @@
 # Our minimal suite of tests that run on each pull request
 name: PR Test
 
-on: pull_request
+on: push
     # branches:
     #   - master
 
