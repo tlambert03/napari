@@ -71,7 +71,7 @@ jobs:
       matrix:
         platform: [ubuntu-latest]
         python: [3.7, 3.8, 3.9]
-        # include:
+        include:
         #   # Windows py38
         #   - python: 3.8
         #     platform: windows-latest
