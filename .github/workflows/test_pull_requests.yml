@@ -138,8 +138,10 @@ jobs:
       - name: Test with tox
         run: |
             if [ ${{ matrix.platform }} == 'Linux' ]; then
+              echo 'hi';
               xvfb-run --auto-servernum tox
             else
+              echo 'no';
               tox
             fi
         env:
