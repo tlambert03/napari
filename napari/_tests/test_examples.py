@@ -7,7 +7,7 @@ import pytest
 import napari
 
 if os.getenv("CI"):
-    pytest.skip(reason="Need to debug segfaults.", allow_module_level=True)
+    pytest.skip("Need to debug segfaults.", allow_module_level=True)
 
 # not testing these examples
 skip = [
