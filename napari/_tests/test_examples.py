@@ -5,7 +5,10 @@ from pathlib import Path
 import pytest
 
 import napari
-from napari.utils.notifications import notification_manager
+
+if os.getenv("CI"):
+    pytest.skip("Need to debug segfaults.", allow_module_level=True)
+
 
 # not testing these examples
 skip = [
@@ -39,13 +42,13 @@ def qapp():
 
 
 @pytest.mark.filterwarnings("ignore")
-@pytest.mark.skipif(bool(os.getenv("CI")), reason="Need to debug segfaults.")
 @pytest.mark.skipif(not examples, reason="No examples were found.")
 @pytest.mark.parametrize("fname", examples)
 def test_examples(qapp, fname, monkeypatch, capsys):
     """Test that all of our examples are still working without warnings."""
 
     from napari._qt.qt_main_window import Window
+    from napari.utils.notifications import notification_manager
 
     # hide viewer window
     monkeypatch.setattr(Window, 'show', lambda *a: None)
