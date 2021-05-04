@@ -1,4 +1,3 @@
-import importlib
 import os
 import platform
 import subprocess
@@ -120,38 +119,38 @@ def sys_info(as_html=False):
     loaded = {}
     for module, name in modules:
         try:
-            loaded[module] = importlib.import_module(module)
+            loaded[module] = __import__(module)
             text += f"<b>{name}</b>: {loaded[module].__version__}<br>"
         except Exception as e:
             text += f"<b>{name}</b>: Import failed ({e})<br>"
 
     text += "<br><b>OpenGL:</b><br>"
 
-    # if not os.getenv("CI"):
-    #     if loaded.get('vispy', False):
-    #         sys_info_text = (
-    #             "<br>".join(
-    #                 [
-    #                     loaded['vispy'].sys_info().split("\n")[index]
-    #                     for index in [-4, -3]
-    #                 ]
-    #             )
-    #             .replace("'", "")
-    #             .replace("<br>", "<br>  - ")
-    #         )
-    #         text += f'  - {sys_info_text}<br>'
-    #     else:
-    #         text += "  - failed to load vispy"
+    if loaded.get('vispy', False):
+        sys_info_text = (
+            "<br>".join(
+                [
+                    loaded['vispy'].sys_info().split("\n")[index]
+                    for index in [-4, -3]
+                ]
+            )
+            .replace("'", "")
+            .replace("<br>", "<br>  - ")
+        )
+        text += f'  - {sys_info_text}<br>'
+    else:
+        text += "  - failed to load vispy"
 
-    #     text += "<br><b>Screens:</b><br>"
-    #     try:
-    #         from qtpy.QtGui import QGuiApplication
+    text += "<br><b>Screens:</b><br>"
 
-    #         screen_list = QGuiApplication.screens()
-    #         for i, screen in enumerate(screen_list, start=1):
-    #             text += f"  - screen {i}: resolution {screen.geometry().width()}x{screen.geometry().height()}, scale {screen.devicePixelRatio()}<br>"
-    #     except Exception as e:
-    #         text += f"  - failed to load screen information {e}"
+    try:
+        from qtpy.QtGui import QGuiApplication
+
+        screen_list = QGuiApplication.screens()
+        for i, screen in enumerate(screen_list, start=1):
+            text += f"  - screen {i}: resolution {screen.geometry().width()}x{screen.geometry().height()}, scale {screen.devicePixelRatio()}<br>"
+    except Exception as e:
+        text += f"  - failed to load screen information {e}"
 
     plugin_manager.discover()
     plugin_strings = []

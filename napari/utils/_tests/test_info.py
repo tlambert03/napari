@@ -5,7 +5,7 @@ from .. import info
 from ..info import citation_text, sys_info
 
 
-def test_sys_info():
+def test_sys_info(qtbot):
     str_info = sys_info()
     assert isinstance(str_info, str)
     assert '<br>' not in str_info
