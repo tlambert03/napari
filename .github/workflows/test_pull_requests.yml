@@ -137,12 +137,19 @@ jobs:
       # `tox -e py38-linux-pyqt,py38-linux-pyside`
       # see tox.ini for more
       - name: Test with tox
-        run: |
-            if [ ${{ matrix.platform }} == 'Linux' ]; then
-              xvfb-run --auto-servernum tox
-            else
-              tox
-            fi
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum tox
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BACKEND: ${{ matrix.backend }}
+          TOXENV: ${{ matrix.toxenv }}
+          NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: ${{ matrix.MIN_REQ || 1 }}
+          PYVISTA_OFF_SCREEN: True
+          MIN_REQ: ${{ matrix.MIN_REQ }}
+
+      - name: Test with tox
+        if: runner.os != 'Linux'
+        run: tox
         env:
           PLATFORM: ${{ matrix.platform }}
           BACKEND: ${{ matrix.backend }}
