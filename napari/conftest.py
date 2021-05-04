@@ -332,3 +332,17 @@ def pytest_collection_modifyitems(session, config, items):
             at_end.append(items.pop(i))
 
     items.extend([x for _, x in sorted(zip(put_at_end, at_end))])
+
+
+def pytest_sessionfinish(session, exitstatus):
+    from qtpy.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if not app:
+        return
+    for window in app.topLevelWindows():
+        window.close()
+        window.deleteLayer()
+    app.processEvents()
+    app.processEvents()
+    app.processEvents()
