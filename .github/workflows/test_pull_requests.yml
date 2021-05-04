@@ -136,7 +136,7 @@ jobs:
       # `tox -e py38-linux-pyqt,py38-linux-pyside`
       # see tox.ini for more
       - name: Test with tox
-        run: tox
+        run: xvfb-run --auto-servernum tox
         env:
           PLATFORM: ${{ matrix.platform }}
           BACKEND: pyqt
@@ -145,7 +145,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True
           MIN_REQ: ${{ matrix.MIN_REQ }}
       - name: Test with tox
-        run: tox
+        run: xvfb-run --auto-servernum tox
         env:
           PLATFORM: ${{ matrix.platform }}
           BACKEND: pyqt
@@ -154,7 +154,7 @@ jobs:
           PYVISTA_OFF_SCREEN: True
           MIN_REQ: ${{ matrix.MIN_REQ }}
       - name: Test with tox
-        run: tox
+        run: xvfb-run --auto-servernum tox
         env:
           PLATFORM: ${{ matrix.platform }}
           BACKEND: pyqt
