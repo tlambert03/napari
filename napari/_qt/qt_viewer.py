@@ -315,21 +315,20 @@ class QtViewer(QSplitter):
     @property
     def console(self):
         """QtConsole: iPython console terminal integrated into the napari GUI."""
-        return None
-        # if self._console is None:
-        #     try:
-        #         from napari_console import QtConsole
+        if self._console is None:
+            try:
+                from napari_console import QtConsole
 
-        #         self.console = QtConsole(self.viewer)
-        #     except ImportError:
-        #         warnings.warn(
-        #             trans._(
-        #                 'napari-console not found. It can be installed with'
-        #                 ' "pip install napari_console"'
-        #             )
-        #         )
-        #         self._console = None
-        # return self._console
+                self.console = QtConsole(self.viewer)
+            except ImportError:
+                warnings.warn(
+                    trans._(
+                        'napari-console not found. It can be installed with'
+                        ' "pip install napari_console"'
+                    )
+                )
+                self._console = None
+        return self._console
 
     @console.setter
     def console(self, console):
