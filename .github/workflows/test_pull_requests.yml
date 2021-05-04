@@ -70,7 +70,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest]
-        python: [3.7, 3.8, 3.9]
+        python: [3.8]
         include:
         #   # Windows py38
         #   - python: 3.8
@@ -135,6 +135,24 @@ jobs:
       # for instance, on ubuntu-latest with python 3.8, it would be equivalent to this command:
       # `tox -e py38-linux-pyqt,py38-linux-pyside`
       # see tox.ini for more
+      - name: Test with tox
+        run: tox
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BACKEND: pyqt
+          TOXENV: ${{ matrix.toxenv }}
+          NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: ${{ matrix.MIN_REQ || 1 }}
+          PYVISTA_OFF_SCREEN: True
+          MIN_REQ: ${{ matrix.MIN_REQ }}
+      - name: Test with tox
+        run: tox
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BACKEND: pyqt
+          TOXENV: ${{ matrix.toxenv }}
+          NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: ${{ matrix.MIN_REQ || 1 }}
+          PYVISTA_OFF_SCREEN: True
+          MIN_REQ: ${{ matrix.MIN_REQ }}
       - name: Test with tox
         run: tox
         env:
