@@ -1,3 +1,4 @@
+import importlib
 import os
 import platform
 import subprocess
@@ -119,7 +120,7 @@ def sys_info(as_html=False):
     loaded = {}
     for module, name in modules:
         try:
-            loaded[module] = __import__(module)
+            loaded[module] = importlib.import_module(module)
             text += f"<b>{name}</b>: {loaded[module].__version__}<br>"
         except Exception as e:
             text += f"<b>{name}</b>: Import failed ({e})<br>"
