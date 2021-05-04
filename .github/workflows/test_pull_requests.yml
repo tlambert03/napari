@@ -137,6 +137,18 @@ jobs:
       # `tox -e py38-linux-pyqt,py38-linux-pyside`
       # see tox.ini for more
       - name: Test with tox
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum tox
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BACKEND: ${{ matrix.backend }}
+          TOXENV: ${{ matrix.toxenv }}
+          NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: ${{ matrix.MIN_REQ || 1 }}
+          PYVISTA_OFF_SCREEN: True
+          MIN_REQ: ${{ matrix.MIN_REQ }}
+
+      - name: Test with tox
+        if: runner.os != 'Linux'
         run: tox
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -151,13 +163,13 @@ jobs:
         uses: codecov/codecov-action@v1
 
   test_pip_install:
-    name: ubuntu-latest 3.8 pip install
+    name: ubuntu-latest 3.9 pip install
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install Linux libraries
         run: |
@@ -168,7 +180,6 @@ jobs:
       - name: Test
         run: |
           pip install --upgrade pip
-          pip install pytest-xvfb
           # pip install this git sha directly from github
           pip install pip install git+git://github.com/${{ github.repository }}.git@${{ github.sha }}#egg=napari[all,testing]
-          pytest --pyargs napari -v --color=yes
+          xvfb-run --auto-servernum pytest --pyargs napari -v --color=yes
