@@ -143,14 +143,14 @@ def sys_info(as_html=False):
 
     text += "<br><b>Screens:</b><br>"
 
-    try:
-        from qtpy.QtGui import QGuiApplication
+    # try:
+    #     from qtpy.QtGui import QGuiApplication
 
-        screen_list = QGuiApplication.screens()
-        for i, screen in enumerate(screen_list, start=1):
-            text += f"  - screen {i}: resolution {screen.geometry().width()}x{screen.geometry().height()}, scale {screen.devicePixelRatio()}<br>"
-    except Exception as e:
-        text += f"  - failed to load screen information {e}"
+    #     screen_list = QGuiApplication.screens()
+    #     for i, screen in enumerate(screen_list, start=1):
+    #         text += f"  - screen {i}: resolution {screen.geometry().width()}x{screen.geometry().height()}, scale {screen.devicePixelRatio()}<br>"
+    # except Exception as e:
+    #     text += f"  - failed to load screen information {e}"
 
     plugin_manager.discover()
     plugin_strings = []
