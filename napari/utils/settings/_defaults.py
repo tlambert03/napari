@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from pydantic import BaseSettings, Field, ValidationError
 from typing_extensions import TypedDict
@@ -49,18 +49,18 @@ class SchemaVersion(str):
         if not isinstance(v, str):
             raise ValueError(
                 trans._(
-                    "A schema version must be a 3 element tuple or string!"
-                ),
-                deferred=True,
+                    "A schema version must be a 3 element tuple or string!",
+                    deferred=True,
+                )
             )
 
         parts = v.split(".")
         if len(parts) != 3:
             raise ValueError(
                 trans._(
-                    "A schema version must be a 3 element tuple or string!"
-                ),
-                deferred=True,
+                    "A schema version must be a 3 element tuple or string!",
+                    deferred=True,
+                )
             )
 
         for part in parts:
@@ -69,9 +69,9 @@ class SchemaVersion(str):
             except Exception:
                 raise ValueError(
                     trans._(
-                        "A schema version subparts must be positive integers or parseable as integers!"
-                    ),
-                    deferred=True,
+                        "A schema version subparts must be positive integers or parseable as integers!",
+                        deferred=True,
+                    )
                 )
 
         return cls(v)
@@ -175,15 +175,16 @@ class QtBindingChoice(str, Enum):
     pyqt5 = 'pyqt5'
 
 
-def yaml_config_settings_source(settings: BaseSettings) -> Dict[str, Any]:
+def yaml_config_settings_source(
+    settings: BaseNapariSettings,
+) -> Dict[str, Any]:
     """Load and validate settings coming from configuration file."""
-    yaml_settings = {}
+    yaml_settings: Dict[str, Any] = {}
     model_class = settings.__class__
 
     # This is set by the SettingsManager
-    loaded_data = getattr(settings, "_LOADED_DATA", {})
-
-    validate = getattr(settings, "_IGNORE_YAML_SOURCE", False)
+    loaded_data = settings._LOADED_DATA
+    validate = settings._IGNORE_YAML_SOURCE
     if not validate and loaded_data:
         # This variable prevents recursion when using the model for validation
         model_class._IGNORE_YAML_SOURCE = True
@@ -217,7 +218,12 @@ def yaml_config_settings_source(settings: BaseSettings) -> Dict[str, Any]:
     return yaml_settings
 
 
-class BaseNapariSettings(BaseSettings, EventedModel):
+class ManagerMixin:
+    _IGNORE_YAML_SOURCE: bool = False
+    _LOADED_DATA: Dict[str, Any] = {}
+
+
+class BaseNapariSettings(BaseSettings, EventedModel, ManagerMixin):
     class Config:
         # Pydantic specific configuration
         env_prefix = 'napari_'
@@ -244,7 +250,7 @@ class AppearanceSettings(BaseNapariSettings):
     #    version, e.g. from 3.0.0 to 4.0.0
     # 3. You don't need to touch this value if you're just adding a new option
 
-    schema_version: SchemaVersion = (0, 1, 0)
+    schema_version: Union[SchemaVersion, Tuple[int, int, int]] = (0, 1, 1)
 
     theme: Theme = Field(
         "dark",
@@ -280,7 +286,7 @@ class ApplicationSettings(BaseNapariSettings):
     #    version, e.g. from 3.0.0 to 4.0.0
     # 3. You don't need to touch this value if you're just adding a new option
 
-    schema_version: SchemaVersion = (0, 1, 0)
+    schema_version: Union[SchemaVersion, Tuple[int, int, int]] = (0, 1, 1)
 
     first_time: bool = True
 
@@ -309,13 +315,13 @@ class ApplicationSettings(BaseNapariSettings):
         title=trans._("Save Window State"),
         description=trans._("Save window state of dock widgets."),
     )
-    window_position: Tuple[int, int] = None
-    window_size: Tuple[int, int] = None
-    window_maximized: bool = None
-    window_fullscreen: bool = None
-    window_state: str = None
-    window_statusbar: bool = True
-    preferences_size: Tuple[int, int] = None
+    window_position: Optional[Tuple[int, int]] = None
+    window_size: Optional[Tuple[int, int]] = None
+    window_maximized: Optional[bool] = None
+    window_fullscreen: Optional[bool] = None
+    window_state: Optional[str] = None
+    window_statusbar: Optional[bool] = True
+    preferences_size: Optional[Tuple[int, int]] = None
     gui_notification_level: NotificationSeverity = Field(
         NotificationSeverity.INFO,
         title=trans._("GUI notification level"),
@@ -330,8 +336,8 @@ class ApplicationSettings(BaseNapariSettings):
             "Set the notification level for the console notifications."
         ),
     )
-    open_history: List = [os.path.dirname(Path.home())]
-    save_history: List = [os.path.dirname(Path.home())]
+    open_history: List[Union[str, Path]] = [os.path.dirname(Path.home())]
+    save_history: List[Union[str, Path]] = [os.path.dirname(Path.home())]
 
     class Config:
         # Pydantic specific configuration
@@ -370,7 +376,7 @@ CallOrderDict = Dict[str, List[PluginHookOption]]
 
 
 class PluginsSettings(BaseNapariSettings):
-    schema_version: SchemaVersion = (0, 1, 1)
+    schema_version: Union[SchemaVersion, Tuple[int, int, int]] = (0, 1, 1)
     call_order: CallOrderDict = Field(
         None,
         title=trans._("Plugin sort order"),
