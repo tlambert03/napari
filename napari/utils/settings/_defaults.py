@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
 from pydantic import BaseSettings, Field, ValidationError
 from typing_extensions import TypedDict
@@ -400,4 +400,8 @@ class PluginsSettings(BaseNapariSettings):
         preferences_exclude = ['schema_version', 'disabled_plugins']
 
 
-CORE_SETTINGS = [AppearanceSettings, ApplicationSettings, PluginsSettings]
+CORE_SETTINGS: List[Type[BaseNapariSettings]] = [
+    AppearanceSettings,
+    ApplicationSettings,
+    PluginsSettings,
+]

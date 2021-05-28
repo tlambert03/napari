@@ -12,8 +12,8 @@ from yaml import safe_dump, safe_load
 
 from ...utils.translations import trans
 from .._base import _APPAUTHOR, _APPNAME, _FILENAME
-from ._defaults import CORE_SETTINGS as CORE_SETTINGS
 from ._defaults import (
+    CORE_SETTINGS,
     AppearanceSettings,
     ApplicationSettings,
     BaseNapariSettings,

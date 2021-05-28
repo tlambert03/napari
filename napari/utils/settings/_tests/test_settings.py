@@ -4,7 +4,7 @@
 import pydantic
 import pytest
 
-from napari.utils.settings._manager import CORE_SETTINGS, SettingsManager
+from napari.utils.settings import CORE_SETTINGS, SettingsManager
 from napari.utils.theme import get_theme, register_theme
 
 
@@ -162,7 +162,6 @@ def test_settings_env_variables(tmp_path, monkeypatch):
     value = 'light'
     monkeypatch.setenv('NAPARI_THEME', value)
     settings = SettingsManager(tmp_path, save_to_disk=True)
-    assert CORE_SETTINGS[0]().theme == value
     assert settings.appearance.theme == value
 
 
