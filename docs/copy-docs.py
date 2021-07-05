@@ -29,10 +29,10 @@ TO_COPY = [
     'roadmaps',
     'images',
     osp.join('_templates', 'autosummary'),
-    *[
+    *(
         (dire, osp.join(dire, 'stable'))
         for dire in ('api', 'guides', 'plugins')
-    ],
+    ),
 ]
 
 # paths to ignore

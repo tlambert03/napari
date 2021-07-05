@@ -209,7 +209,7 @@ def napari_write_shapes(path: str, data: Any, meta: dict) -> Optional[str]:
 
     # TODO: we need to change this to the axis names once we get access to them
     # construct table from data
-    n_dimensions = max([s.shape[1] for s in data])
+    n_dimensions = max(s.shape[1] for s in data)
     column_names = ['axis-' + str(n) for n in range(n_dimensions)]
 
     # add shape id and vertex id of each vertex

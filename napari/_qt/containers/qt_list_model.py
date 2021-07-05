@@ -37,7 +37,7 @@ class QtListModel(_BaseEventedItemModel[ItemType]):
         """
         if not indices:
             return None
-        items, indices = zip(*[(self.getItem(i), i.row()) for i in indices])
+        items, indices = zip(*((self.getItem(i), i.row()) for i in indices))
         return ItemMimeData(items, indices)
 
     def dropMimeData(

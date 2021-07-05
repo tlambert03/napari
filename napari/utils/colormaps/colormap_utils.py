@@ -418,7 +418,7 @@ def vispy_or_mpl_colormap(name):
                         deferred=True,
                         name=name,
                         colormaps=", ".join(
-                            sorted([f'"{cm}"' for cm in colormaps])
+                            sorted(f'"{cm}"' for cm in colormaps)
                         ),
                     )
                 )

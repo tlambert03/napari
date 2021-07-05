@@ -122,7 +122,7 @@ class TransformChain(EventedList, Transform):
         if len(self) == 1:
             return self[0]
         else:
-            return tz.pipe(self[0], *[tf.compose for tf in self[1:]])
+            return tz.pipe(self[0], *(tf.compose for tf in self[1:]))
 
     def set_slice(self, axes: Sequence[int]) -> 'TransformChain':
         """Return a transform chain subset to the visible dimensions.
