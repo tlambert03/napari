@@ -1,16 +1,16 @@
 repos:
 -   repo: https://github.com/pycqa/isort
-    rev: 5.8.0
+    rev: 5.9.1
     hooks:
     - id: isort
       exclude: _vendor|vendored|examples
--   repo: https://github.com/python/black
-    rev: 21.5b1
+-   repo: https://github.com/psf/black
+    rev: 21.6b0
     hooks:
     - id: black
       pass_filenames: true
       exclude: _vendor|vendored|examples
--   repo: https://gitlab.com/pycqa/flake8
+-   repo: https://github.com/PyCQA/flake8
     rev: 3.9.2
     hooks:
     - id: flake8
@@ -18,7 +18,7 @@ repos:
       # this seems to need to be here in addition to setup.cfg
       exclude: _vendor|vendored|__init__.py|examples
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.16.0
+    rev: v2.20.0
     hooks:
     - id: pyupgrade
       args: ["--py37-plus", "--keep-runtime-typing"]

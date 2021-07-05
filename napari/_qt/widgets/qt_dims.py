@@ -169,7 +169,7 @@ class QtDims(QWidget):
         """
         fm = QFontMetrics(QFont("", 0))
         labels = self.findChildren(QLineEdit, 'axis_label')
-        newwidth = max([fm.boundingRect(lab.text()).width() for lab in labels])
+        newwidth = max(fm.boundingRect(lab.text()).width() for lab in labels)
 
         if any(self._displayed_sliders):
             # set maximum width to no more than 20% of slider width

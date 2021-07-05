@@ -109,7 +109,7 @@ class QRangeSlider(QWidget):
             Current minimum and maximum values of the range slider
         """
         return tuple(
-            [self._slider_to_data_value(v) for v in self.sliderValues()]
+            self._slider_to_data_value(v) for v in self.sliderValues()
         )
 
     def setValues(self, values):
