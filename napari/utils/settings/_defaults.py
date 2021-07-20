@@ -413,6 +413,30 @@ class ApplicationSettings(BaseNapariSettings):
         description=trans._("Loop mode for playback."),
     )
 
+    grid_width: int = Field(
+        -1,
+        title=trans._("Grid width"),
+        description=trans._("Number of columns in the grid."),
+        ge=-1,
+        le=20,
+    )
+
+    grid_height: int = Field(
+        -1,
+        title=trans._("Grid height"),
+        description=trans._("Number of rows in the grid."),
+        ge=-1,
+        le=20,
+    )
+
+    grid_stride: int = Field(
+        1,
+        title=trans._("Grid stride"),
+        description=trans._("Number of layers to place in each grid square."),
+        ge=-20,
+        le=20,
+    )
+
     class Config:
         # Pydantic specific configuration
         schema_extra = {
@@ -436,6 +460,9 @@ class ApplicationSettings(BaseNapariSettings):
             "open_history",
             "save_history",
             "ipy_interactive",
+            "grid_stride",
+            "grid_height",
+            "grid_width",
         ]
 
 
