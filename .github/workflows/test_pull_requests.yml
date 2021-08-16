@@ -142,7 +142,7 @@ jobs:
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: tox -- napari/_tests
+          run: tox
         env:
           PLATFORM: ${{ matrix.platform }}
           BACKEND: ${{ matrix.backend }}
