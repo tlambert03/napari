@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import chain, repeat
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from qtpy.QtCore import QItemSelection, QModelIndex, Qt
+from qtpy.QtCore import QItemSelection, QModelIndex, Qt, QTimer
 from qtpy.QtWidgets import QAbstractItemView
 
 from ._base_item_model import ItemRole
@@ -89,7 +89,7 @@ class _BaseEventedItemView(Generic[ItemType]):
         # connect selection events
         root.selection.events.changed.connect(self._on_py_selection_change)
         root.selection.events._current.connect(self._on_py_current_change)
-        self._sync_selection_models()
+        QTimer.singleShot(0, self._sync_selection_models)
 
     def _on_py_current_change(self, event: Event):
         """The python model current item has changed. Update the Qt view."""

@@ -1,6 +1,8 @@
+from typing import TYPE_CHECKING
+
 from qtpy.QtWidgets import QFrame, QStackedWidget
 
-from ...layers import Image, Labels, Points, Shapes, Surface, Tracks, Vectors
+from ... import layers
 from ...utils import config
 from ...utils.translations import trans
 from .qt_image_controls import QtImageControls
@@ -11,14 +13,17 @@ from .qt_surface_controls import QtSurfaceControls
 from .qt_tracks_controls import QtTracksControls
 from .qt_vectors_controls import QtVectorsControls
 
+if TYPE_CHECKING:
+    from ...components import LayerList
+
 layer_to_controls = {
-    Labels: QtLabelsControls,
-    Image: QtImageControls,  # must be after Labels layer
-    Points: QtPointsControls,
-    Shapes: QtShapesControls,
-    Surface: QtSurfaceControls,
-    Vectors: QtVectorsControls,
-    Tracks: QtTracksControls,
+    layers.Labels: QtLabelsControls,
+    layers.Image: QtImageControls,
+    layers.Points: QtPointsControls,
+    layers.Shapes: QtShapesControls,
+    layers.Surface: QtSurfaceControls,
+    layers.Vectors: QtVectorsControls,
+    layers.Tracks: QtTracksControls,
 }
 
 if config.async_loading:
@@ -62,8 +67,8 @@ class QtLayerControlsContainer(QStackedWidget):
 
     Parameters
     ----------
-    viewer : napari.components.ViewerModel
-        Napari viewer containing the rendered scene, layers, and controls.
+    layers : napari.components.LayerList
+        list of layers in the viewer.
 
     Attributes
     ----------
@@ -76,7 +81,7 @@ class QtLayerControlsContainer(QStackedWidget):
         widgets[layer] = controls
     """
 
-    def __init__(self, layer_list):
+    def __init__(self, layer_list: 'LayerList'):
         super().__init__()
         self.setProperty("emphasized", True)
 
@@ -84,7 +89,12 @@ class QtLayerControlsContainer(QStackedWidget):
         self.empty_widget = QFrame()
         self.widgets = {}
         self.addWidget(self.empty_widget)
-        self.setCurrentWidget(self.empty_widget)
+
+        for layer in layer_list:
+            self._add_layer(layer)
+
+        cur = self.widgets.get(layer_list.selection.active, self.empty_widget)
+        self.setCurrentWidget(cur)
 
         layer_list.events.inserted.connect(self._add)
         layer_list.events.removed.connect(self._remove)
@@ -98,12 +108,7 @@ class QtLayerControlsContainer(QStackedWidget):
         event : Event
             Event with the target layer at `event.item`.
         """
-        layer = event.value
-        if layer is None:
-            self.setCurrentWidget(self.empty_widget)
-        else:
-            controls = self.widgets[layer]
-            self.setCurrentWidget(controls)
+        self.setCurrentWidget(self.widgets.get(event.value, self.empty_widget))
 
     def _add(self, event):
         """Add the controls target layer to the list of control widgets.
@@ -113,10 +118,11 @@ class QtLayerControlsContainer(QStackedWidget):
         event : Event
             Event with the target layer at `event.value`.
         """
-        layer = event.value
-        controls = create_qt_layer_controls(layer)
-        self.addWidget(controls)
-        self.widgets[layer] = controls
+        self._add_layer(event.value)
+
+    def _add_layer(self, layer: layers.Layer):
+        self.widgets[layer] = create_qt_layer_controls(layer)
+        self.addWidget(self.widgets[layer])
 
     def _remove(self, event):
         """Remove the controls target layer from the list of control widgets.
