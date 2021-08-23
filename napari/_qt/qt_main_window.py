@@ -2,6 +2,8 @@
 Custom Qt widgets that serve as native objects that the public-facing elements
 wrap.
 """
+from __future__ import annotations
+
 import inspect
 import os
 import sys
@@ -34,6 +36,7 @@ from ..plugins import menu_item_template as plugin_menu_item_template
 from ..plugins import plugin_manager
 from ..settings import get_settings
 from ..utils import perf
+from ..utils.events import EmitterGroup
 from ..utils.io import imsave
 from ..utils.misc import in_jupyter, running_as_bundled_app
 from ..utils.notifications import Notification
@@ -67,9 +70,9 @@ class _QtMainWindow(QMainWindow):
     # We use this instead of QApplication.activeWindow for compatibility with
     # IPython usage. When you activate IPython, it will appear that there are
     # *no* active windows, so we want to track the most recently active windows
-    _instances: ClassVar[List['_QtMainWindow']] = []
+    _instances: ClassVar[List[_QtMainWindow]] = []
 
-    def __init__(self, viewer: 'Viewer', parent=None) -> None:
+    def __init__(self, viewer: Viewer, parent=None) -> None:
         super().__init__(parent)
         self._ev = None
         self.qt_viewer = QtViewer(viewer, show_welcome_screen=True)
@@ -121,7 +124,7 @@ class _QtMainWindow(QMainWindow):
                 self.qt_viewer.canvas._backend.screen_changed
             )
 
-    def statusBar(self) -> 'ViewerStatusBar':
+    def statusBar(self) -> ViewerStatusBar:
         return super().statusBar()
 
     def update_tooltip(self, event):
@@ -143,7 +146,7 @@ class _QtMainWindow(QMainWindow):
         return cls._instances[-1] if cls._instances else None
 
     @classmethod
-    def current_viewer(cls):
+    def current_viewer(cls) -> Viewer:
         window = cls.current()
         return window.qt_viewer.viewer if window else None
 
@@ -406,7 +409,7 @@ class Window:
         Window menu.
     """
 
-    def __init__(self, viewer: 'Viewer', *, show: bool = True):
+    def __init__(self, viewer: Viewer, *, show: bool = True):
 
         # create QApplication if it doesn't already exist
         get_app()
@@ -432,6 +435,8 @@ class Window:
         if perf.USE_PERFMON:
             self._add_viewer_dock_widget(self.qt_viewer.dockPerformance)
 
+        self.events = EmitterGroup(self, False, closed=None)
+        self._qt_window.destroyed.connect(lambda: self.events.closed())
         viewer.events.status.connect(self._status_changed)
         viewer.events.help.connect(self._help_changed)
         viewer.events.title.connect(self._title_changed)
@@ -1050,6 +1055,5 @@ class Window:
         # Someone is closing us twice? Only try to delete self._qt_window
         # if we still have one.
         if hasattr(self, '_qt_window'):
-            self.qt_viewer.close()
             self._qt_window.close()
-            del self._qt_window
+            get_app().processEvents()

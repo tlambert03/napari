@@ -116,7 +116,8 @@ class QtViewer(QSplitter):
 
         self.viewer = viewer
         self.dims = QtDims(self.viewer.dims)
-        self.controls = QtLayerControlsContainer(self.viewer)
+
+        self.controls = QtLayerControlsContainer(viewer.layers)
         self.layers = QtLayerList(self.viewer.layers)
         self.layerButtons = QtLayerButtons(self.viewer)
         self.viewerButtons = QtViewerButtons(self.viewer)
@@ -187,7 +188,7 @@ class QtViewer(QSplitter):
 
         # Stacked widget to provide a welcome page
         self._canvas_overlay = QtWidgetOverlay(self, self.canvas.native)
-        self._canvas_overlay.set_welcome_visible(show_welcome_screen)
+        self._update_welcome_screen()
         self._canvas_overlay.sig_dropped.connect(self.dropEvent)
 
         main_widget = QWidget()
@@ -223,9 +224,6 @@ class QtViewer(QSplitter):
 
         self.setAcceptDrops(True)
 
-        for layer in self.viewer.layers:
-            self._add_layer(layer)
-
         self.view = self.canvas.central_widget.add_view()
         self.camera = VispyCamera(
             self.view, self.viewer.camera, self.viewer.dims
@@ -242,6 +240,8 @@ class QtViewer(QSplitter):
         self._remote_manager = _create_remote_manager(
             self.viewer.layers, self._qt_poll
         )
+        for layer in self.viewer.layers:
+            self._add_layer(layer)
 
         # moved from the old layerlist... still feels misplaced.
         # can you help me move this elsewhere?

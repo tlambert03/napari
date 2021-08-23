@@ -76,10 +76,9 @@ class QtLayerControlsContainer(QStackedWidget):
         widgets[layer] = controls
     """
 
-    def __init__(self, viewer):
+    def __init__(self, layer_list):
         super().__init__()
         self.setProperty("emphasized", True)
-        self.viewer = viewer
 
         self.setMouseTracking(True)
         self.empty_widget = QFrame()
@@ -87,9 +86,9 @@ class QtLayerControlsContainer(QStackedWidget):
         self.addWidget(self.empty_widget)
         self.setCurrentWidget(self.empty_widget)
 
-        self.viewer.layers.events.inserted.connect(self._add)
-        self.viewer.layers.events.removed.connect(self._remove)
-        viewer.layers.selection.events.active.connect(self._display)
+        layer_list.events.inserted.connect(self._add)
+        layer_list.events.removed.connect(self._remove)
+        layer_list.selection.events.active.connect(self._display)
 
     def _display(self, event):
         """Change the displayed controls to be those of the target layer.
