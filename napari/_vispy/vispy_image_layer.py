@@ -79,13 +79,9 @@ class VispyImageLayer(VispyBaseLayer):
         self.node = self._layer_node.get_node(self.layer._ndisplay)
 
         if data is None:
-            data = np.zeros((1,) * self.layer._ndisplay)
+            data = np.zeros((1,) * self.layer._ndisplay, np.float32)
 
-        if self.layer._empty:
-            self.node.visible = False
-        else:
-            self.node.visible = self.layer.visible
-
+        self.node.visible = False if self.layer._empty else self.layer.visible
         if self.layer.loaded:
             self.node.set_data(data)
 
