@@ -324,6 +324,10 @@ class Layer(KeymapProvider, MousemapProvider, Node, ABC):
 
         self.name = name
 
+        # XXX ugly stuff of nightmares XXX
+        self._vispy_layer = None
+        # XXX ugly stuff of nightmares XXX
+
     def __str__(self):
         """Return self.name."""
         return self.name
