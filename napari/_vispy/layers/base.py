@@ -46,9 +46,6 @@ class VispyBaseLayer(ABC):
         self.events = None  # Some derived classes have events.
 
         self.layer = layer
-        # XXX ugly stuff of nightmares XXX
-        layer._vispy_layer = self
-        # XXX ugly stuff of nightmares XXX
         self._array_like = False
         self.node = node
 

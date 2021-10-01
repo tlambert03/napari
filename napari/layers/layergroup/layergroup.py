@@ -79,10 +79,8 @@ class LayerGroup(Group[Layer], Layer):
         new_layer = self._type_check(value)
         new_layer.name = self._coerce_name(new_layer.name)
         super().insert(index, new_layer)
-        # XXX ugly stuff of nightmares XXX
         if self._vispy_layer is not None:
             self._vispy_layer.add_layer(new_layer._vispy_layer)
-        # XXX ugly stuff of nightmares XXX
         self._update_thumbnail()
 
     def __delitem__(self, key):

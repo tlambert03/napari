@@ -47,7 +47,6 @@ from .._vispy import (  # isort:skip
     VispyCanvas,
     VispyScaleBarOverlay,
     VispyTextOverlay,
-    create_vispy_visual,
 )
 
 
@@ -91,8 +90,6 @@ class QtViewer(QSplitter):
         Button controls for napari layers.
     layers : QtLayerList
         Qt view for LayerList controls.
-    layer_to_visual : dict
-        Dictionary mapping napari layers with their corresponding vispy_layers.
     view : vispy scene widget
         View displayed by vispy canvas. Adds a vispy ViewBox as a child widget.
     viewer : napari.components.ViewerModel
@@ -169,8 +166,6 @@ class QtViewer(QSplitter):
         # Only created if using perfmon.
         self.dockPerformance = self._create_performance_dock_widget()
 
-        # This dictionary holds the corresponding vispy visual for each layer
-        self.layer_to_visual = {}
         action_manager.register_action(
             "napari:toggle_console_visibility",
             self.toggle_console_visibility,
@@ -411,7 +406,7 @@ class QtViewer(QSplitter):
         layer : napari.layers.Layer
             Layer to be added.
         """
-        vispy_layer = create_vispy_visual(layer)
+        vispy_layer = layer._create_vispy_layer()
         if not vispy_layer:
             return
         # QtPoll is experimental.
@@ -428,7 +423,6 @@ class QtViewer(QSplitter):
 
         vispy_layer.node.parent = self.view.scene
         vispy_layer.order = len(self.viewer.layers) - 1
-        self.layer_to_visual[layer] = vispy_layer
 
     def _remove_layer(self, event):
         """When a layer is removed, remove its parent.
@@ -439,10 +433,7 @@ class QtViewer(QSplitter):
             The napari event that triggered this method.
         """
         layer = event.value
-        vispy_layer = self.layer_to_visual[layer]
-        vispy_layer.close()
-        del vispy_layer
-        del self.layer_to_visual[layer]
+        layer._vispy_layer.close()
         self._reorder_layers(None)
 
     def _reorder_layers(self, event):
@@ -454,8 +445,7 @@ class QtViewer(QSplitter):
             The napari event that triggered this method.
         """
         for i, layer in enumerate(self.viewer.layers):
-            vispy_layer = self.layer_to_visual[layer]
-            vispy_layer.order = i
+            layer._vispy_layer.order = i
         self.canvas._draw_order.clear()
         self.canvas.update()
 
