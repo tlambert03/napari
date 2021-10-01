@@ -17,6 +17,7 @@ skip = [
     'points-over-time.py',  # too resource hungry
     'embed_ipython.py',  # fails without monkeypatch
     'custom_key_bindings.py',  # breaks EXPECTED_NUMBER_OF_VIEWER_METHODS later
+    'new_theme.py',  # testing theme is extremely slow on CI
 ]
 EXAMPLE_DIR = Path(napari.__file__).parent.parent / 'examples'
 # using f.name here and re-joining at `run_path()` for test key presentation
@@ -26,6 +27,10 @@ examples = [f.name for f in EXAMPLE_DIR.glob("*.py") if f.name not in skip]
 # still some CI segfaults, but only on windows with pyqt5
 if os.getenv("CI") and os.name == 'nt' and API_NAME == 'PyQt5':
     examples = []
+
+if os.getenv("CI") and os.name == 'nt':
+    if 'to_screenshot.py' in examples:
+        examples.remove('to_screenshot.py')
 
 
 @pytest.fixture
@@ -63,4 +68,9 @@ def test_examples(qapp, fname, monkeypatch, capsys):
     monkeypatch.setattr(notification_manager, 'receive_error', raise_errors)
 
     # run the example!
-    runpy.run_path(str(EXAMPLE_DIR / fname))
+    try:
+        runpy.run_path(str(EXAMPLE_DIR / fname))
+    except SystemExit as e:
+        # we use sys.exit(0) to gracefully exit from examples
+        if e.code != 0:
+            raise

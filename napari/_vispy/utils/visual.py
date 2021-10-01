@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from vispy.scene.widgets.viewbox import ViewBox
 
-from ..layers import (
+from ...layers import (
     Image,
     Labels,
     Layer,
@@ -14,16 +14,16 @@ from ..layers import (
     Vectors,
     layergroup,
 )
-from ..utils.config import async_octree
-from ..utils.translations import trans
-from .vispy_base_layer import VispyBaseLayer
-from .vispy_image_layer import VispyImageLayer
-from .vispy_layer_group import VispyLayerGroup
-from .vispy_points_layer import VispyPointsLayer
-from .vispy_shapes_layer import VispyShapesLayer
-from .vispy_surface_layer import VispySurfaceLayer
-from .vispy_tracks_layer import VispyTracksLayer
-from .vispy_vectors_layer import VispyVectorsLayer
+from ...utils.config import async_octree
+from ...utils.translations import trans
+from ..layers.base import VispyBaseLayer
+from ..layers.group import VispyLayerGroup
+from ..layers.image import VispyImageLayer
+from ..layers.points import VispyPointsLayer
+from ..layers.shapes import VispyShapesLayer
+from ..layers.surface import VispySurfaceLayer
+from ..layers.tracks import VispyTracksLayer
+from ..layers.vectors import VispyVectorsLayer
 
 layer_to_visual = {
     Image: VispyImageLayer,
