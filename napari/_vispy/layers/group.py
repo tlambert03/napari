@@ -1,6 +1,6 @@
 from vispy.scene.visuals import Compound
 
-from .vispy_base_layer import VispyBaseLayer
+from .base import VispyBaseLayer
 
 
 class VispyLayerGroup(VispyBaseLayer):
