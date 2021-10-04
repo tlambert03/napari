@@ -11,7 +11,6 @@ from ...utils.naming import inc_name_count
 from ...utils.translations import trans
 from ...utils.tree import Group
 from ..base import Layer
-from ..utils.layer_utils import combine_extents
 
 Extent = namedtuple('Extent', 'data world step')
 
@@ -88,14 +87,12 @@ class LayerGroup(Group[Layer], Layer):
         super().__delitem__(key)
         self._update_thumbnail()
 
+    @property
     def _extent_data(self):
-        """Extent of layer in data coordinates.
-
-        Returns
-        -------
-        extent_data : array, shape (2, D)
-        """
-        return combine_extents([c._get_extent() for c in self])
+        # it's fine cause we don't use it here, and override methods that do
+        # TODO: should this (and the depending _display_bounding_box)
+        # NOT be in base?
+        raise NotImplementedError()
 
     @property
     def _extent_world(self) -> np.ndarray:
@@ -221,6 +218,18 @@ class LayerGroup(Group[Layer], Layer):
             Flat list containing values of the layer data at the coord.
         """
         return [layer._get_value(position) for layer in self]
+
+    def get_ray_intersections(
+        self, position, view_direction, dims_displayed, world
+    ):
+        rays = []
+        for child in self:
+            rays.append(
+                child.get_ray_intersections(
+                    position, view_direction, dims_displayed, world
+                )
+            )
+        return rays
 
     def _set_view_slice(self):
         """Set the view for each layer given the indices to slice with."""
