@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Generic, Iterable, Optional, TypeVar
 
+from ...translations import trans
 from ._set import EventedSet
 
 if TYPE_CHECKING:
@@ -98,17 +99,16 @@ class Selection(EventedSet[_T]):
         self._current = value
         self.events.active(value=value)
 
-    def _update_active(self, event=None):
+    def _update_active(self):
         """On a selection event, update the active item based on selection.
 
         (An active item is a single selected item).
         """
         if len(self) == 1:
             self.active = list(self)[0]
-        else:
-            if self._active is not None:
-                self._active = None
-                self.events.active(value=None)
+        elif self._active is not None:
+            self._active = None
+            self.events.active(value=None)
 
     def clear(self, keep_current: bool = False) -> None:
         """Clear the selection."""
@@ -145,7 +145,13 @@ class Selection(EventedSet[_T]):
             current = None
 
         if not sequence_like(data):
-            raise TypeError(f'Value is not a valid sequence: {data}')
+            raise TypeError(
+                trans._(
+                    'Value is not a valid sequence: {data}',
+                    deferred=True,
+                    data=data,
+                )
+            )
 
         # no type parameter was provided, just return
         if not field.sub_fields:

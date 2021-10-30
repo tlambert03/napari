@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import Callable, Optional, Sequence, Tuple, Union
 
 from qtpy.QtCore import (
@@ -18,17 +17,16 @@ from qtpy.QtWidgets import (
     QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
-    QMainWindow,
     QPushButton,
     QSizePolicy,
     QTextEdit,
     QVBoxLayout,
     QWidget,
 )
+from superqt import QElidingLabel, ensure_main_thread
 
 from ...utils.notifications import Notification, NotificationSeverity
 from ...utils.translations import trans
-from ..widgets.qt_eliding_label import MultilineElidedLabel
 
 ActionSequence = Sequence[Tuple[str, Callable[[], None]]]
 
@@ -65,8 +63,9 @@ class NapariQtNotification(QDialog):
     FADE_OUT_RATE = 120
     DISMISS_AFTER = 4000
     MIN_WIDTH = 400
+    MIN_EXPANSION = 18
 
-    message: MultilineElidedLabel
+    message: QElidingLabel
     source_label: QLabel
     severity_icon: QLabel
 
@@ -77,23 +76,16 @@ class NapariQtNotification(QDialog):
         source: Optional[str] = None,
         actions: ActionSequence = (),
     ):
-        """[summary]"""
-        super().__init__(None)
+        super().__init__()
 
-        # FIXME: this does not work with multiple viewers.
-        # we need a way to detect the viewer in which the error occured.
-        for wdg in QApplication.topLevelWidgets():
-            if isinstance(wdg, QMainWindow):
-                try:
-                    # TODO: making the canvas the parent makes it easier to
-                    # move/resize, but also means that the notification can get
-                    # clipped on the left if the canvas is too small.
-                    canvas = wdg.centralWidget().children()[1].canvas.native
-                    self.setParent(canvas)
-                    canvas.resized.connect(self.move_to_bottom_right)
-                    break
-                except Exception:
-                    pass
+        from ..qt_main_window import _QtMainWindow
+
+        current_window = _QtMainWindow.current()
+        if current_window is not None:
+            canvas = current_window.qt_viewer._canvas_overlay
+            self.setParent(canvas)
+            canvas.resized.connect(self.move_to_bottom_right)
+
         self.setupUi()
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setup_buttons(actions)
@@ -145,7 +137,7 @@ class NapariQtNotification(QDialog):
             self.timer.setInterval(self.DISMISS_AFTER)
             self.timer.setSingleShot(True)
             self.timer.timeout.connect(self.close)
-        self.timer.start()
+            self.timer.start()
 
     def mouseMoveEvent(self, event):
         """On hover, stop the self-destruct timer"""
@@ -174,6 +166,9 @@ class NapariQtNotification(QDialog):
         self.geom_anim.setDuration(100)
         self.geom_anim.setStartValue(curr)
         new_height = self.sizeHint().height()
+        if new_height < curr.height():
+            # new height would shift notification down, ensure some expansion
+            new_height = curr.height() + self.MIN_EXPANSION
         delta = new_height - curr.height()
         self.geom_anim.setEndValue(
             QRect(curr.x(), curr.y() - delta, curr.width(), new_height)
@@ -220,7 +215,9 @@ class NapariQtNotification(QDialog):
         self.severity_icon.setMinimumWidth(30)
         self.severity_icon.setMaximumWidth(30)
         self.row1.addWidget(self.severity_icon, alignment=Qt.AlignTop)
-        self.message = MultilineElidedLabel(self.row1_widget)
+        self.message = QElidingLabel()
+        self.message.setWordWrap(True)
+        self.message.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.message.setMinimumWidth(self.MIN_WIDTH - 200)
         self.message.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Expanding
@@ -280,7 +277,7 @@ class NapariQtNotification(QDialog):
 
             def call_back_with_self(callback, self):
                 """
-                we need a higher order function this to capture the reference to self.
+                We need a higher order function this to capture the reference to self.
                 """
 
                 def _inner():
@@ -326,7 +323,20 @@ class NapariQtNotification(QDialog):
                 text = QTextEdit()
                 text.setHtml(notification.as_html())
                 text.setReadOnly(True)
+                btn = QPushButton(trans._('Enter Debugger'))
+
+                def _enter_debug_mode():
+                    btn.setText(
+                        trans._(
+                            'Now Debugging. Please quit debugger in console to continue'
+                        )
+                    )
+                    _debug_tb(notification.exception.__traceback__)
+                    btn.setText(trans._('Enter Debugger'))
+
+                btn.clicked.connect(_enter_debug_mode)
                 tbdialog.layout().addWidget(text)
+                tbdialog.layout().addWidget(btn, 0, Qt.AlignRight)
                 tbdialog.show()
 
             actions = tuple(notification.actions) + (
@@ -343,14 +353,29 @@ class NapariQtNotification(QDialog):
         )
 
     @classmethod
+    @ensure_main_thread
     def show_notification(cls, notification: Notification):
-        from ...utils.settings import SETTINGS
+        from ...settings import get_settings
+
+        settings = get_settings()
 
         # after https://github.com/napari/napari/issues/2370,
         # the os.getenv can be removed (and NAPARI_CATCH_ERRORS retired)
         if (
-            os.getenv("NAPARI_CATCH_ERRORS") not in ('0', 'False')
-            and notification.severity
-            >= SETTINGS.application.gui_notification_level
+            notification.severity
+            >= settings.application.gui_notification_level
         ):
             cls.from_notification(notification).show()
+
+
+def _debug_tb(tb):
+    import pdb
+
+    from ..utils import event_hook_removed
+
+    QApplication.processEvents()
+    QApplication.processEvents()
+    with event_hook_removed():
+        print("Entering debugger. Type 'q' to return to napari.\n")
+        pdb.post_mortem(tb)
+        print("\nDebugging finished.  Napari active again.")

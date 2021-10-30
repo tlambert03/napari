@@ -5,6 +5,7 @@ from pydantic import root_validator, validator
 from typing_extensions import Literal  # Added to typing in 3.8
 
 from ..utils.events import EventedModel
+from ..utils.translations import trans
 
 
 class Dims(EventedModel):
@@ -20,9 +21,10 @@ class Dims(EventedModel):
         Dimension which was last used.
     range : tuple of 3-tuple of float
         List of tuples (min, max, step), one for each dimension. In a world
-        coordinates space.
+        coordinates space. As with Python's `range` and `slice`, max is not
+        included.
     current_step : tuple of int
-        Tuple the slider position for each dims slider, in slider coordinates.
+        Tuple of the slider position for each dims slider, in slider coordinates.
     order : tuple of int
         Tuple of ordering the dimensions, where the last dimensions are rendered.
     axis_labels : tuple of str
@@ -38,7 +40,8 @@ class Dims(EventedModel):
         Dimension which was last used.
     range : tuple of 3-tuple of float
         List of tuples (min, max, step), one for each dimension. In a world
-        coordinates space.
+        coordinates space. As with Python's `range` and `slice`, max is not
+        included.
     current_step : tuple of int
         Tuple the slider position for each dims slider, in slider coordinates.
     order : tuple of int
@@ -122,7 +125,12 @@ class Dims(EventedModel):
         # Check the order is a permutation of 0, ..., ndim - 1
         if not set(values['order']) == set(range(ndim)):
             raise ValueError(
-                f"Invalid ordering {values['order']} for {ndim} dimensions"
+                trans._(
+                    "Invalid ordering {order} for {ndim} dimensions",
+                    deferred=True,
+                    order=values['order'],
+                    ndim=ndim,
+                )
             )
 
         # Check the axis labels tuple has same number of elements as ndim
@@ -146,7 +154,7 @@ class Dims(EventedModel):
     def nsteps(self) -> Tuple[int, ...]:
         """Tuple of int: Number of slider steps for each dimension."""
         return tuple(
-            int((max_val - min_val) // step_size) + 1
+            int((max_val - min_val) // step_size)
             for min_val, max_val, step_size in self.range
         )
 
@@ -351,9 +359,12 @@ def assert_axis_in_bounds(axis: int, ndim: int) -> int:
         The given axis index is out of bounds.
     """
     if axis not in range(-ndim, ndim):
-        msg = (
-            f'Axis {axis} not defined for dimensionality {ndim}. '
-            f'Must be in [{-ndim}, {ndim}).'
+        msg = trans._(
+            'Axis {axis} not defined for dimensionality {ndim}. Must be in [{ndim_lower}, {ndim}).',
+            deferred=True,
+            axis=axis,
+            ndim=ndim,
+            ndim_lower=-ndim,
         )
         raise ValueError(msg)
 

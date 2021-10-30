@@ -2,19 +2,24 @@
 
 A tiled image layer that uses TiledImageVisual and TextureAtlas2D.
 """
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from vispy.scene.visuals import create_visual_node
 
-from ...layers.image.experimental import OctreeChunk
-from ...layers.image.image import Image
 from ...utils.events import EmitterGroup
 from ...utils.perf import block_timer
-from ..vispy_image_layer import VispyImageLayer
+from ..layers.image import VispyImageLayer
 from .tile_grid import TileGrid
 from .tiled_image_visual import TiledImageVisual
+
+if TYPE_CHECKING:
+    from ...layers.image.experimental import OctreeChunk
+    from ...layers.image.image import Image
+
 
 # Create the scene graph Node version of this visual. Visuals are a mix of
 # the visual itself and a scene graph node. The scene graph node is what
@@ -293,7 +298,7 @@ class VispyTiledImageLayer(VispyImageLayer):
         # every frame.
         return self.node.add_chunks(drawable_chunks)
 
-    def _on_loaded(self, _event) -> None:
+    def _on_loaded(self) -> None:
         """The layer loaded new data, so update our view."""
         self._update_view()
         self.events.loaded()

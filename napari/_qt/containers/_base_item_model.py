@@ -7,6 +7,7 @@ from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 from ...utils.events import disconnect_events
 from ...utils.events.containers import SelectableEventedList
+from ...utils.translations import trans
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -194,7 +195,11 @@ class _BaseEventedItemModel(QAbstractItemModel, Generic[ItemType]):
         """Call during __init__, to set the python model and connections"""
         if not isinstance(root, SelectableEventedList):
             raise TypeError(
-                f"root must be an instance of {SelectableEventedList}"
+                trans._(
+                    "root must be an instance of {class_name}",
+                    deferred=True,
+                    class_name=SelectableEventedList,
+                )
             )
         current_root = getattr(self, "_root", None)
         if root is current_root:
@@ -236,7 +241,7 @@ class _BaseEventedItemModel(QAbstractItemModel, Generic[ItemType]):
         par, idx = self._split_nested_index(event.index)
         self.beginInsertRows(par, idx, idx)
 
-    def _on_end_insert(self, e):
+    def _on_end_insert(self):
         """Must be called after insert operation to update model."""
         self.endInsertRows()
 
@@ -249,7 +254,7 @@ class _BaseEventedItemModel(QAbstractItemModel, Generic[ItemType]):
         par, idx = self._split_nested_index(event.index)
         self.beginRemoveRows(par, idx, idx)
 
-    def _on_end_remove(self, e):
+    def _on_end_remove(self):
         """Must be called after remove operation to update model."""
         self.endRemoveRows()
 
@@ -264,7 +269,7 @@ class _BaseEventedItemModel(QAbstractItemModel, Generic[ItemType]):
 
         self.beginMoveRows(src_par, src_idx, src_idx, dest_par, dest_idx)
 
-    def _on_end_move(self, e):
+    def _on_end_move(self):
         """Must be called after move operation to update model."""
         self.endMoveRows()
 
