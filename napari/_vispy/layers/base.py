@@ -105,28 +105,28 @@ class VispyBaseLayer(ABC):
         self.node.order = order
 
     @abstractmethod
-    def _on_data_change(self, event=None):
+    def _on_data_change(self):
         raise NotImplementedError()
 
-    def _on_refresh_change(self, event=None):
+    def _on_refresh_change(self):
         self.node.update()
 
-    def _on_visible_change(self, event=None):
+    def _on_visible_change(self):
         self.node.visible = self.layer.visible and all(
             p._visible for p in self.layer.iter_parents()
         )
 
-    def _on_opacity_change(self, event=None):
+    def _on_opacity_change(self):
         parents = self.layer.iter_parents()
         parent_opacity = np.product([p._opacity for p in parents])
         self.node.opacity = self.layer.opacity * parent_opacity
 
-    def _on_blending_change(self, event=None):
+    def _on_blending_change(self):
         blending_kwargs = BLENDING_MODES[self.layer.blending]
         self.node.set_gl_state(**blending_kwargs)
         self.node.update()
 
-    def _on_matrix_change(self, event=None):
+    def _on_matrix_change(self):
         transform = self.layer._transforms.simplified.set_slice(
             self.layer._dims_displayed
         )
@@ -157,7 +157,7 @@ class VispyBaseLayer(ABC):
             affine_matrix = affine_matrix @ affine_offset
         self._master_transform.matrix = affine_matrix
 
-    def _on_experimental_clipping_planes_change(self, event=None):
+    def _on_experimental_clipping_planes_change(self):
         if hasattr(self.node, 'clipping_planes'):
             self.node.clipping_planes = (
                 self.layer.experimental_clipping_planes.as_array()

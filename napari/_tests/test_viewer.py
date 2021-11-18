@@ -11,6 +11,7 @@ from napari._tests.utils import (
     layer_test_data,
     skip_local_popups,
     skip_on_win_ci,
+    slow,
 )
 from napari.utils._tests.test_naming import eval_with_filename
 from napari.utils.action_manager import action_manager
@@ -142,6 +143,7 @@ def test_add_layer_magic_name(
 
 
 @skip_on_win_ci
+@slow(20)
 def test_screenshot(make_napari_viewer):
     """Test taking a screenshot."""
     viewer = make_napari_viewer()
@@ -201,6 +203,9 @@ def test_changing_theme(make_napari_viewer):
         viewer.theme = 'nonexistent_theme'
 
 
+# TODO: revisit the need for sync_only here.
+# An async failure was observed here on CI, but was not reproduced locally
+@pytest.mark.sync_only
 @pytest.mark.parametrize('layer_class, data, ndim', layer_test_data)
 def test_roll_transpose_update(make_napari_viewer, layer_class, data, ndim):
     """Check that transpose and roll preserve correct transform sequence."""
@@ -295,6 +300,7 @@ def test_deleting_points(make_napari_viewer):
     assert len(pts_layer.data) == 3
 
 
+@slow(15)
 @skip_local_popups
 def test_custom_layer(make_napari_viewer):
     """Make sure that custom layers subclasses can be added to the viewer."""
