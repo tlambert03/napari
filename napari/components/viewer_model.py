@@ -25,8 +25,6 @@ from .. import layers
 from ..layers import Image, Layer
 from ..layers._source import layer_source
 from ..layers.image._image_utils import guess_labels
-
-# from .layerlist import LayerList
 from ..layers.layergroup import LayerGroup
 from ..layers.utils.stack_utils import split_channels
 from ..settings import get_settings

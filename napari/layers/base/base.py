@@ -419,13 +419,6 @@ class Layer(KeymapProvider, MousemapProvider, Node, ABC):
         self._metadata.clear()
         self._metadata.update(value)
 
-    def _create_vispy_layer(self):
-        # avoid circular import
-        from ..._vispy import create_vispy_visual
-
-        vispy_layer = create_vispy_visual(self)
-        return vispy_layer
-
     @property
     def source(self):
         return self._source

@@ -33,7 +33,6 @@ layer_to_visual = {
     Surface: VispySurfaceLayer,
     Vectors: VispyVectorsLayer,
     Tracks: VispyTracksLayer,
-    Tracks: VispyTracksLayer,
     layergroup.LayerGroup: VispyLayerGroup,
 }
 

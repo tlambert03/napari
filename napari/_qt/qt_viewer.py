@@ -541,6 +541,9 @@ class QtViewer(QSplitter):
             Layer to be added.
         """
         vispy_layer = create_vispy_visual(layer)
+        if not vispy_layer:
+            return
+        # QtPoll is experimental.
         if self._qt_poll is not None:
             # QtPoll will call VipyBaseImage._on_poll() when the camera
             # moves or the timer goes off.
@@ -572,13 +575,7 @@ class QtViewer(QSplitter):
         self._reorder_layers()
 
     def _reorder_layers(self):
-        """When the list is reordered, propagate changes to draw order.
-
-        Parameters
-        ----------
-        event : napari.utils.event.Event
-            The napari event that triggered this method.
-        """
+        """When the list is reordered, propagate changes to draw order."""
         for i, layer in enumerate(self.viewer.layers):
             vispy_layer = self.layer_to_visual[layer]
             vispy_layer.order = i

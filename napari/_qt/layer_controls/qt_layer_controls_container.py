@@ -49,10 +49,11 @@ def create_qt_layer_controls(layer):
     controls : napari.layers.base.QtLayerControls
         Qt controls widget
     """
-    candidates = []
-    for layer_type in layer_to_controls:
-        if isinstance(layer, layer_type):
-            candidates.append(layer_type)
+    candidates = [
+        layer_type
+        for layer_type in layer_to_controls
+        if isinstance(layer, layer_type)
+    ]
 
     if not candidates:
         raise TypeError(
