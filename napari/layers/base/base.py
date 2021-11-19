@@ -224,7 +224,6 @@ class Layer(KeymapProvider, MousemapProvider, Node, ABC):
         if name is None and data is not None:
             name = magic_name(data, path_prefix=ROOT_DIR)
 
-        self.__vispy_layer = None
         self._source = current_source()
         self.dask_optimized_slicing = configure_dask(data, cache)
         self._metadata = dict(metadata or {})
@@ -420,16 +419,11 @@ class Layer(KeymapProvider, MousemapProvider, Node, ABC):
         self._metadata.clear()
         self._metadata.update(value)
 
-    @property
-    def _vispy_layer(self):
-        return self.__vispy_layer
-
     def _create_vispy_layer(self):
         # avoid circular import
         from ..._vispy import create_vispy_visual
 
         vispy_layer = create_vispy_visual(self)
-        self.__vispy_layer = vispy_layer
         return vispy_layer
 
     @property

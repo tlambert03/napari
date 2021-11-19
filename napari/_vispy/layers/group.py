@@ -8,6 +8,13 @@ class VispyLayerGroup(VispyBaseLayer):
         self.node = SubScene()
         super().__init__(layer, self.node)
 
+        self.layer.events.inserted.connect(self._on_inserted)
+
+    def _on_inserted(self, event=None):
+        for child in self.layer:
+            # print(child)
+            ...
+
     def _on_data_change(self, event=None):
         pass
 
