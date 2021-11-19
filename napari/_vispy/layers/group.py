@@ -10,14 +10,10 @@ class VispyLayerGroup(VispyBaseLayer):
 
         self.layer.events.inserted.connect(self._on_inserted)
 
-    def _on_inserted(self, event=None):
-        for child in self.layer:
-            # print(child)
-            ...
-
-    def _on_data_change(self, event=None):
+    def _on_inserted(self):
+        # TODO: self.child.node.parent = self.node
+        #       need access to both self.node and self.child.node!
         pass
 
-    def add_layer(self, layer: VispyBaseLayer):
-        if layer is not None:
-            layer.node.parent = self.node
+    def _on_data_change(self):
+        pass
