@@ -204,7 +204,7 @@ class QtViewer(QSplitter):
         Dimension sliders; Qt View for Dims model.
     dockConsole : QtViewerDockWidget
         QWidget wrapped in a QDockWidget with forwarded viewer events.
-    aboutKeybindings :
+    aboutKeybindings : QtAboutKeybindings
         Key bindings for the 'About' Qt dialog.
     dockLayerControls : QtViewerDockWidget
         QWidget wrapped in a QDockWidget with forwarded viewer events.
@@ -541,8 +541,7 @@ class QtViewer(QSplitter):
             Layer to be added.
         """
         vispy_layer = create_vispy_visual(layer)
-        if not vispy_layer:
-            return
+
         # QtPoll is experimental.
         if self._qt_poll is not None:
             # QtPoll will call VipyBaseImage._on_poll() when the camera
