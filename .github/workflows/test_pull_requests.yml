@@ -88,7 +88,7 @@ jobs:
             platform: windows-latest
             backend: pyside
           # macOS py38
-          - python: 3.8
+          - python: 3.9
             platform: macos-latest
             backend: pyqt # (only testing pyqt on mac in the interest of speed)
           # minimum specified requirements
