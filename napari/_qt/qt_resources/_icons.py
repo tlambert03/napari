@@ -201,32 +201,39 @@ def _compile_qrc_pyqt6(qrc) -> bytes:
     raise NotImplementedError('pyrcc discontinued on Pyqt6')
 
 
-def _compile_qrc_pyside2(qrc) -> bytes:
-    """Compile qrc file using the PySide2 method.
+def _compile_qrc_pyside(qrc) -> bytes:
+    """Compile qrc file using the PySide2/6 method.
 
     PySide compiles qrc files using the rcc binary in the root directory, (same
     path as PySide2.__init__)
     """
+    import sys
     from subprocess import CalledProcessError, run
 
-    import PySide2
+    pyside_root = Path(__import__(qtpy.API_NAME).__file__).parent
+    bin_root = Path(sys.executable).parent
 
-    pyside_root = Path(PySide2.__file__).parent
+    def _get_cmd():
+        name = qtpy.API_NAME.lower()
+        if os.name == 'nt':
+            look_for = ('rcc.exe', f'{name}-rcc.exe')
+        else:
+            look_for = ('rcc', f'{name}-rcc')
 
-    if os.name == 'nt':
-        look_for = ('rcc.exe', 'pyside2-rcc.exe')
-    else:
-        look_for = ('rcc', 'pyside2-rcc')
+        for rcc_name in look_for:
+            for dir in (pyside_root, bin_root):
+                if (dir / rcc_name).exists():
+                    cmd = [str(dir / rcc_name)]
+                    if name not in rcc_name:
+                        # the newer pure rcc version requires this for python
+                        cmd.extend(['-g', 'python'])
+                    return cmd
 
-    for bin in look_for:
-        if (pyside_root / bin).exists():
-            cmd = [str(pyside_root / bin)]
-            if 'pyside2' not in bin:
-                # the newer pure rcc version requires this for python
-                cmd.extend(['-g', 'python'])
-            break
-    else:
-        raise RuntimeError(f"PySide2 rcc binary not found in {pyside_root}")
+    cmd = _get_cmd()
+    if not cmd:
+        raise RuntimeError(
+            f"{qtpy.API_NAME} rcc binary not found in {pyside_root} or {bin_root}"
+        )
 
     try:
         return run(cmd + [qrc], check=True, capture_output=True).stdout
@@ -240,8 +247,10 @@ def compile_qrc(qrc) -> bytes:
         return _compile_qrc_pyqt6(qrc).replace(b'PyQt6', b'qtpy')
     elif qtpy.API_NAME == 'PyQt5':
         return _compile_qrc_pyqt5(qrc).replace(b'PyQt5', b'qtpy')
-    elif qtpy.API_NAME == 'PySide2':
-        return _compile_qrc_pyside2(qrc).replace(b'PySide2', b'qtpy')
+    elif qtpy.API_NAME in ('PySide2', 'PySide6'):
+        return _compile_qrc_pyside(qrc).replace(
+            qtpy.API_NAME.encode(), b'qtpy'
+        )
     else:
         raise RuntimeError(
             f"Cannot compile QRC. Unexpected qtpy API name: {qtpy.API_NAME}"
