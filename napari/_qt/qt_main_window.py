@@ -45,7 +45,7 @@ from . import menus
 from .dialogs.qt_activity_dialog import QtActivityDialog
 from .dialogs.qt_notification import NapariQtNotification
 from .qt_event_loop import NAPARI_ICON_PATH, get_app, quit_app
-from .qt_resources import get_stylesheet
+from .qt_resources import get_stylesheet, register_napari_themes
 from .qt_viewer import QtViewer
 from .utils import QImg2array, qbytearray_to_str, str_to_qbytearray
 from .widgets.qt_viewer_dock_widget import (
@@ -417,6 +417,7 @@ class Window:
         # connect theme events before collecting plugin-provided themes
         # to ensure icons from the plugins are generated correctly.
         _themes.events.added.connect(self._add_theme)
+        _themes.events.added.connect(register_napari_themes)
         _themes.events.removed.connect(self._remove_theme)
 
         # discover any themes provided by plugins
@@ -478,7 +479,7 @@ class Window:
         theme.events.text.connect(self._update_theme_no_event)
         theme.events.warning.connect(self._update_theme_no_event)
         theme.events.current.connect(self._update_theme_no_event)
-        theme.events.icon.connect(self._update_theme_no_event)
+        theme.events.icon.connect(self._theme_icon_changed)
         theme.events.canvas.connect(
             lambda _: self._qt_viewer.canvas._set_theme_change(
                 get_settings().appearance.theme
@@ -502,7 +503,7 @@ class Window:
         theme.events.text.disconnect(self._update_theme_no_event)
         theme.events.warning.disconnect(self._update_theme_no_event)
         theme.events.current.disconnect(self._update_theme_no_event)
-        theme.events.icon.disconnect(self._update_theme_no_event)
+        theme.events.icon.disconnect(self._theme_icon_changed)
         theme.events.canvas.disconnect(
             lambda _: self._qt_viewer.canvas._set_theme_change(
                 get_settings().appearance.theme
@@ -527,6 +528,22 @@ class Window:
         """Remove theme and disconnect events."""
         theme = event.value
         self._disconnect_theme(theme)
+
+    def _theme_icon_changed(self):
+        """Trigger rebuild of theme and all resources.
+
+        This is really only required whenever there are changes to the `icon`
+        attribute on the `Theme` model. Most other attributes simply update
+        the stylesheet.
+        """
+        from .._qt.qt_resources import (
+            _register_napari_resources,
+            _unregister_napari_resources,
+        )
+
+        _unregister_napari_resources()
+        _register_napari_resources(True, force_rebuild=True)
+        self._update_theme()
 
     @property
     def qt_viewer(self):
@@ -1180,6 +1197,7 @@ class Window:
         """Carry out various teardown tasks such as event disconnection."""
         self._setup_existing_themes(False)
         _themes.events.added.disconnect(self._add_theme)
+        _themes.events.added.disconnect(register_napari_themes)
         _themes.events.removed.disconnect(self._remove_theme)
         self._qt_viewer.viewer.layers.events.disconnect(self.file_menu.update)
         for menu in self.file_menu._INSTANCES:

@@ -229,9 +229,6 @@ def get_theme(name, as_dict=None):
     return _theme
 
 
-_themes: EventedDict[str, Theme] = EventedDict(basetype=Theme)
-
-
 def register_theme(name, theme):
     """Register a new or updated theme.
 
@@ -242,16 +239,9 @@ def register_theme(name, theme):
     theme : dict of str: str, Theme
         Theme mapping elements to colors.
     """
-    if isinstance(theme, dict):
+    if not isinstance(theme, Theme):
         theme = Theme(**theme)
-    assert isinstance(theme, Theme)
     _themes[name] = theme
-
-    from qtpy.QtCore import QDir
-
-    from ..resources._icons import build_theme_svgs
-
-    QDir.addSearchPath(f'theme_{name}', build_theme_svgs(name))
 
 
 def unregister_theme(name):
@@ -262,7 +252,8 @@ def unregister_theme(name):
     name : str
         Name of the theme to be removed.
     """
-    _themes.pop(name, None)
+    if name in _themes:
+        _themes.pop(name)
 
 
 def available_themes():
@@ -288,39 +279,45 @@ def rebuild_theme_settings():
     settings.appearance.refresh_themes()
 
 
-DARK = Theme(
-    name='dark',
-    background='rgb(38, 41, 48)',
-    foreground='rgb(65, 72, 81)',
-    primary='rgb(90, 98, 108)',
-    secondary='rgb(134, 142, 147)',
-    highlight='rgb(106, 115, 128)',
-    text='rgb(240, 241, 242)',
-    icon='rgb(209, 210, 212)',
-    warning='rgb(153, 18, 31)',
-    current='rgb(0, 122, 204)',
-    syntax_style='native',
-    console='rgb(0, 0, 0)',
-    canvas='black',
+_themes: EventedDict[str, Theme] = EventedDict(
+    {
+        'dark': Theme(
+            **{
+                'name': 'dark',
+                'background': 'rgb(38, 41, 48)',
+                'foreground': 'rgb(65, 72, 81)',
+                'primary': 'rgb(90, 98, 108)',
+                'secondary': 'rgb(134, 142, 147)',
+                'highlight': 'rgb(106, 115, 128)',
+                'text': 'rgb(240, 241, 242)',
+                'icon': 'rgb(209, 210, 212)',
+                'warning': 'rgb(153, 18, 31)',
+                'current': 'rgb(0, 122, 204)',
+                'syntax_style': 'native',
+                'console': 'rgb(0, 0, 0)',
+                'canvas': 'black',
+            }
+        ),
+        'light': Theme(
+            **{
+                'name': 'light',
+                'background': 'rgb(239, 235, 233)',
+                'foreground': 'rgb(214, 208, 206)',
+                'primary': 'rgb(188, 184, 181)',
+                'secondary': 'rgb(150, 146, 144)',
+                'highlight': 'rgb(163, 158, 156)',
+                'text': 'rgb(59, 58, 57)',
+                'icon': 'rgb(107, 105, 103)',
+                'warning': 'rgb(255, 18, 31)',
+                'current': 'rgb(253, 240, 148)',
+                'syntax_style': 'default',
+                'console': 'rgb(255, 255, 255)',
+                'canvas': 'white',
+            }
+        ),
+    },
+    basetype=Theme,
 )
-LIGHT = Theme(
-    name='light',
-    background='rgb(239, 235, 233)',
-    foreground='rgb(214, 208, 206)',
-    primary='rgb(188, 184, 181)',
-    secondary='rgb(150, 146, 144)',
-    highlight='rgb(163, 158, 156)',
-    text='rgb(59, 58, 57)',
-    icon='rgb(107, 105, 103)',
-    warning='rgb(255, 18, 31)',
-    current='rgb(253, 240, 148)',
-    syntax_style='default',
-    console='rgb(255, 255, 255)',
-    canvas='white',
-)
-
-register_theme('dark', DARK)
-register_theme('light', LIGHT)
 
 
 # this function here instead of plugins._npe2 to avoid circular import
@@ -334,7 +331,7 @@ def _install_npe2_themes(_themes):
         # are not provided by the plugin
         d = _themes[theme.type].dict()
         d.update(theme.colors.dict(exclude_unset=True))
-        register_theme(theme.id, d)
+        _themes[theme.id] = Theme(**d)
 
 
 _install_npe2_themes(_themes)
