@@ -19,6 +19,7 @@ from ...utils.translations import trans
 from ..layers.base import VispyBaseLayer
 from ..layers.group import VispyLayerGroup
 from ..layers.image import VispyImageLayer
+from ..layers.labels import VispyLabelsLayer
 from ..layers.points import VispyPointsLayer
 from ..layers.shapes import VispyShapesLayer
 from ..layers.surface import VispySurfaceLayer
@@ -27,7 +28,7 @@ from ..layers.vectors import VispyVectorsLayer
 
 layer_to_visual = {
     Image: VispyImageLayer,
-    Labels: VispyImageLayer,
+    Labels: VispyLabelsLayer,
     Points: VispyPointsLayer,
     Shapes: VispyShapesLayer,
     Surface: VispySurfaceLayer,

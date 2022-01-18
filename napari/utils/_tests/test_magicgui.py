@@ -8,8 +8,9 @@ import pytest
 from magicgui import magicgui
 
 from napari import Viewer, layers, types
-from napari._tests.utils import layer_test_data, slow
+from napari._tests.utils import layer_test_data
 from napari.layers import Image, Labels, Layer
+from napari.utils._proxies import PublicOnlyProxy
 from napari.utils.misc import all_subclasses
 
 try:
@@ -67,7 +68,6 @@ def test_magicgui_add_data(make_napari_viewer, LayerType, data, ndim):
     assert viewer.layers[0].source.widget == add_data
 
 
-@slow(10)
 @pytest.mark.skipif(
     sys.version_info < (3, 9), reason='Futures not subscriptable before py3.9'
 )
@@ -157,7 +157,6 @@ def test_magicgui_get_data(make_napari_viewer, LayerType, data, ndim):
     viewer.add_layer(layer)
 
 
-@slow(10)
 @pytest.mark.parametrize('LayerType, data, ndim', test_data)
 def test_magicgui_add_layer(make_napari_viewer, LayerType, data, ndim):
     viewer = make_napari_viewer()
@@ -249,7 +248,9 @@ def test_magicgui_get_viewer(make_napari_viewer):
 
     assert func() is None
     viewer.window.add_dock_widget(func)
-    assert func() is viewer
+    v = func()
+    assert isinstance(v, PublicOnlyProxy)
+    assert v.__wrapped__ is viewer
     # no widget should be shown
     assert not func.v.visible
 
@@ -283,3 +284,15 @@ def test_mgui_forward_refs(tmp_path, name):
     script_path = tmp_path / 'script.py'
     script_path.write_text(textwrap.dedent(script.format(name)))
     subprocess.run([sys.executable, str(script_path)], check=True)
+
+
+def test_layers_populate_immediately(make_napari_viewer):
+    """make sure that the layers dropdown is populated upon adding to viewer"""
+    from magicgui.widgets import create_widget
+
+    labels_layer = create_widget(annotation=Labels, label="ROI")
+    viewer = make_napari_viewer()
+    viewer.add_labels(np.zeros((10, 10), dtype=int))
+    assert not len(labels_layer.choices)
+    viewer.window.add_dock_widget(labels_layer)
+    assert len(labels_layer.choices) == 1

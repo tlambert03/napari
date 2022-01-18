@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from pydantic import validator
@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation as R
 
 from ..utils.events import EventedModel
 from ..utils.misc import ensure_n_tuple
+from ..utils.translations import trans
 
 
 class Camera(EventedModel):
@@ -118,7 +119,12 @@ class Camera(EventedModel):
 
         # explicit check for parallel view direction and up direction
         if np.allclose(np.cross(view_direction, up_direction), 0):
-            raise ValueError("view direction and up direction are parallel")
+            raise ValueError(
+                trans._(
+                    "view direction and up direction are parallel",
+                    deferred=True,
+                )
+            )
 
         x_direction = np.cross(up_direction, view_direction)
         x_direction /= np.linalg.norm(x_direction)
@@ -144,15 +150,36 @@ class Camera(EventedModel):
         dims_displayed : Tuple[int]
             Dimensions in which to embed the 3D view vector.
 
-
         Returns
         -------
         view_direction_nd : np.ndarray
             nD view direction vector as an (ndim, ) ndarray
-
         """
         if len(dims_displayed) != 3:
             return None
         view_direction_nd = np.zeros(ndim)
         view_direction_nd[list(dims_displayed)] = self.view_direction
         return view_direction_nd
+
+    def calculate_nd_up_direction(
+        self, ndim: int, dims_displayed: Tuple[int]
+    ) -> Optional[np.ndarray]:
+        """Calculate the nD up direction vector of the camera.
+
+        Parameters
+        ----------
+        ndim : int
+            Number of dimensions in which to embed the 3D view vector.
+        dims_displayed : Tuple[int]
+            Dimensions in which to embed the 3D view vector.
+
+        Returns
+        -------
+        up_direction_nd : np.ndarray
+            nD view direction vector as an (ndim, ) ndarray
+        """
+        if len(dims_displayed) != 3:
+            return None
+        up_direction_nd = np.zeros(ndim)
+        up_direction_nd[list(dims_displayed)] = self.up_direction
+        return up_direction_nd

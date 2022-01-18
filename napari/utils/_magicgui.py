@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Set, Tuple, Type
 
 from typing_extensions import get_args
 
+from ..utils._proxies import PublicOnlyProxy
+
 if TYPE_CHECKING:
     from concurrent.futures import Future
 
@@ -158,7 +160,7 @@ def add_worker_data(
 
     This allows someone annotate their magicgui with a return type of
     `FunctionWorker[...]`, create a napari thread worker (e.g. with the
-    @thread_worker decorator), then simply return the worker.  We will hook up
+    ``@thread_worker`` decorator), then simply return the worker.  We will hook up
     the `returned` signal to the machinery to add the result of the
     long-running function to the viewer.
 
@@ -189,6 +191,7 @@ def add_worker_data(
                 ...
 
             return do_something_slowly(...)
+
     """
 
     cb = (
@@ -267,6 +270,8 @@ def find_viewer_ancestor(widget) -> Optional[Viewer]:
     viewer : napari.Viewer or None
         Viewer instance if one exists, else None.
     """
+    from .._qt.widgets.qt_viewer_dock_widget import QtViewerDockWidget
+
     # magicgui v0.2.0 widgets are no longer QWidget subclasses, but the native
     # widget is available at widget.native
     if hasattr(widget, 'native') and hasattr(widget.native, 'parent'):
@@ -274,9 +279,21 @@ def find_viewer_ancestor(widget) -> Optional[Viewer]:
     else:
         parent = widget.parent()
     while parent:
-        if hasattr(parent, 'qt_viewer'):
-            return parent.qt_viewer.viewer
+        if hasattr(parent, '_qt_viewer'):  # QMainWindow
+            return parent._qt_viewer.viewer
+        if isinstance(parent, QtViewerDockWidget):  # DockWidget
+            qt_viewer = parent._ref_qt_viewer()
+            if qt_viewer is not None:
+                return qt_viewer.viewer
+            return None
         parent = parent.parent()
+    return None
+
+
+def proxy_viewer_ancestor(widget) -> Optional[PublicOnlyProxy[Viewer]]:
+    viewer = find_viewer_ancestor(widget)
+    if viewer:
+        return PublicOnlyProxy(viewer)
     return None
 
 
@@ -362,7 +379,7 @@ def _make_choice_data_setter(gui: CategoricalWidget, choice_name: str):
     Note, using lru_cache here so that the **same** function object is returned
     if you call this twice for the same widget/choice_name combination. This is
     so that when we connect it above in `layer.events.data.connect()`, it will
-    only get connected once (because .connect() will not add a specific callback
+    only get connected once (because ``.connect()`` will not add a specific callback
     more than once)
     """
     gui_ref = weakref.ref(gui)
@@ -395,6 +412,7 @@ def add_layer_to_viewer(gui, result: Any, return_type: Type[Layer]) -> None:
     >>> @magicgui
     ... def make_layer() -> napari.layers.Image:
     ...     return napari.layers.Image(np.random.rand(64, 64))
+
     """
     if result is None:
         return
