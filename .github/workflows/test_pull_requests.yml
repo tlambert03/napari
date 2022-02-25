@@ -94,7 +94,7 @@ jobs:
 
       - name: vispy
         run: |
-          python -m pip install vispy
+          python -m pip install vispy PyOpenGL
 
       - uses: GabrielBB/xvfb-action@v1
         with:
