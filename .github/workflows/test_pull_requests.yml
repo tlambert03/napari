@@ -89,7 +89,9 @@ jobs:
 
       - uses: tlambert03/setup-qt-libs@v1
       - uses: openrndr/setup-opengl@v1.1
-      - run: xvfb-run glxinfo
+      - uses: GabrielBB/xvfb-action@v1
+        with:
+          run: glxinfo
 
       # strategy borrowed from vispy for installing opengl libs on windows
       - name: Install Windows OpenGL
