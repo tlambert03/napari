@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Tuple
 
 import numpy as np
+import vispy
 from vispy.app import Canvas
 from vispy.gloo import gl
 from vispy.gloo.context import get_current_canvas
@@ -27,6 +28,7 @@ def _opengl_context():
     Ideally call opengl_context() on start after creating your first
     Canvas. However it will work either way.
     """
+    vispy.use(gl='gl+')
     canvas = Canvas(show=False) if get_current_canvas() is None else None
     try:
         yield
