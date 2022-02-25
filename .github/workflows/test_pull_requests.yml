@@ -98,7 +98,7 @@ jobs:
 
       - uses: GabrielBB/xvfb-action@v1
         with:
-          run: python -c "import vispy; print(vispy.sys_info())"
+          run: python -c "import vispy; vispy.use(gl='gl+'); print(vispy.sys_info())"
 
       - uses: tlambert03/setup-qt-libs@v1
       # strategy borrowed from vispy for installing opengl libs on windows
