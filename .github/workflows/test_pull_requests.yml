@@ -77,7 +77,9 @@ jobs:
           #   toxenv: headless-py38-linux
           - python: 3.8
             platform: ubuntu-18.04
-            MESA_GL_VERSION_OVERRIDE: 3.2
+          - python: 3.9
+            platform: macos-latest
+            backend: pyqt # (only testing pyqt on mac in the interest of speed)
 
     steps:
       - uses: actions/checkout@v2
