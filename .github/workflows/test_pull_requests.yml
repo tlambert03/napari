@@ -89,9 +89,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - uses: GabrielBB/xvfb-action@v1
-        with:
-          run: glxinfo
+
       - uses: openrndr/setup-opengl@v1.1
       - uses: GabrielBB/xvfb-action@v1
         with:
