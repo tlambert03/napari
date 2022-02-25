@@ -77,9 +77,6 @@ jobs:
           #   toxenv: headless-py38-linux
           - python: 3.8
             platform: ubuntu-18.04
-          - python: 3.9
-            platform: macos-latest
-            backend: pyqt # (only testing pyqt on mac in the interest of speed)
 
     steps:
       - uses: actions/checkout@v2
@@ -90,7 +87,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
 
-      - uses: openrndr/setup-opengl@v1.1
+      - run: sudo apt-get install -y libegl1-mesa libegl1-mesa-dev mesa-utils
       - uses: GabrielBB/xvfb-action@v1
         with:
           run: glxinfo
