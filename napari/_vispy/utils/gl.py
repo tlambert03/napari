@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Tuple
 
 import numpy as np
+import vispy
 from vispy.app import Canvas
 from vispy.gloo import gl
 from vispy.gloo.context import get_current_canvas
@@ -27,6 +28,7 @@ def _opengl_context():
     Ideally call opengl_context() on start after creating your first
     Canvas. However it will work either way.
     """
+    vispy.use(gl='gl+')
     canvas = Canvas(show=False) if get_current_canvas() is None else None
     try:
         yield
@@ -59,18 +61,12 @@ def get_max_texture_sizes() -> Tuple[int, int]:
     with _opengl_context():
         max_size_2d = gl.glGetParameter(gl.GL_MAX_TEXTURE_SIZE)
 
-    if max_size_2d == ():
-        max_size_2d = None
-
     # vispy/gloo doesn't provide the GL_MAX_3D_TEXTURE_SIZE location,
     # but it can be found in this list of constants
     # http://pyopengl.sourceforge.net/documentation/pydoc/OpenGL.GL.html
     with _opengl_context():
         GL_MAX_3D_TEXTURE_SIZE = 32883
         max_size_3d = gl.glGetParameter(GL_MAX_3D_TEXTURE_SIZE)
-
-    if max_size_3d == ():
-        max_size_3d = None
 
     return max_size_2d, max_size_3d
 
