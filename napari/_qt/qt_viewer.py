@@ -300,9 +300,6 @@ class QtViewer(QSplitter):
 
         self.setAcceptDrops(True)
 
-        for layer in self.viewer.layers:
-            self._add_layer(layer)
-
         self.view = self.canvas.central_widget.add_view(border_width=0)
         self.camera = VispyCamera(
             self.view, self.viewer.camera, self.viewer.dims
@@ -319,6 +316,9 @@ class QtViewer(QSplitter):
         self._remote_manager = _create_remote_manager(
             self.viewer.layers, self._qt_poll
         )
+
+        for layer in self.viewer.layers:
+            self._add_layer(layer)
 
         # moved from the old layerlist... still feels misplaced.
         # can you help me move this elsewhere?

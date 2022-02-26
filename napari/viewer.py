@@ -1,18 +1,16 @@
-import typing
-from typing import TYPE_CHECKING, Optional
-from weakref import WeakSet
+from __future__ import annotations
 
-import magicgui as mgui
+from typing import TYPE_CHECKING, Iterator, Optional, Tuple, Type
 
 from .components.viewer_model import ViewerModel
-from .utils import _magicgui, config
 
 if TYPE_CHECKING:
     # helpful for IDE support
     from ._qt.qt_main_window import Window
 
+    # helpful for IDE support
 
-@mgui.register_type(bind=_magicgui.proxy_viewer_ancestor)
+
 class Viewer(ViewerModel):
     """Napari ndarray viewer.
 
@@ -32,8 +30,7 @@ class Viewer(ViewerModel):
         Whether to show the viewer after instantiation. by default True.
     """
 
-    _window: 'Window' = None  # type: ignore
-    _instances: typing.ClassVar[WeakSet] = WeakSet()
+    _window: Optional[Window] = None
 
     def __init__(
         self,
@@ -50,16 +47,12 @@ class Viewer(ViewerModel):
             order=order,
             axis_labels=axis_labels,
         )
-        # having this import here makes all of Qt imported lazily, upon
-        # instantiating the first Viewer.
-        from .window import Window
-
-        self._window = Window(self, show=show)
-        self._instances.add(self)
+        if show:
+            self.show()
 
     # Expose private window publically. This is needed to keep window off pydantic model
     @property
-    def window(self) -> 'Window':
+    def window(self) -> Optional[Window]:
         return self._window
 
     def update_console(self, variables):
@@ -75,10 +68,10 @@ class Viewer(ViewerModel):
             give (list/tuple/str) then the variable values looked up in the
             callers frame.
         """
-        if self.window._qt_viewer._console is None:
+        if self.window.qt_viewer.console is None:
             return
         else:
-            self.window._qt_viewer.console.push(variables)
+            self.window.qt_viewer.console.push(variables)
 
     def screenshot(self, path=None, *, canvas_only=True, flash: bool = True):
         """Take currently displayed screen and convert to an image array.
@@ -102,57 +95,60 @@ class Viewer(ViewerModel):
             Numpy array of type ubyte and shape (h, w, 4). Index [0, 0] is the
             upper-left corner of the rendered region.
         """
-        return self.window.screenshot(
-            path=path, flash=flash, canvas_only=canvas_only
-        )
+        if canvas_only:
+            return self.window.qt_viewer.screenshot(path=path, flash=flash)
+        else:
+            return self.window.screenshot(path=path, flash=flash)
 
     def show(self, *, block=False):
         """Resize, show, and raise the viewer window."""
+        if self._window is None:
+            self._make_window()
+
         self.window.show(block=block)
+        # having this import here makes all of Qt imported lazily, upon
+        # instantiating the first Viewer.
+
+    def _make_window(self):
+        from .window import Window
+
+        self._window = Window(self)
+        self._window.events.closed.connect(self._disconnect_ui)
 
     def close(self):
         """Close the viewer window."""
-        # Remove all the layers from the viewer
-        self.layers.clear()
-        # Close the main window
-        self.window.close()
+        if self.window:
+            self.window.close()
 
-        if config.async_loading:
-            from .components.experimental.chunk import chunk_loader
+    def _disconnect_ui(self, *_):
+        from qtpy.QtCore import QObject
 
-            # TODO_ASYNC: Find a cleaner way to do this? This fixes some
-            # tests. We are telling the ChunkLoader that this layer is
-            # going away:
-            # https://github.com/napari/napari/issues/1500
-            for layer in self.layers:
-                chunk_loader.on_layer_deleted(layer)
-        self._instances.discard(self)
+        from ._qt.qt_main_window import Window
 
-    @classmethod
-    def close_all(cls) -> int:
-        """
-        Class metod, Close all existing viewer instances.
+        for cnx in self._iter_connections():
+            _, _, receiver, _, disconnect = cnx
+            if (
+                isinstance(receiver, (QObject, Window))
+                or 'vispy' in type(receiver).__name__.lower()
+            ):
+                disconnect()
+        self._window = None
 
-        This is mostly exposed to avoid leaking of viewers when running tests.
-        As having many non-closed viewer can adversely affect performances.
+    def _iter_connections(self) -> Iterator[Tuple[Type, str, Type, str]]:
+        from .utils.events import EmitterGroup, iter_connections
 
-        It will return the number of viewer closed.
+        yield from iter_connections(self.events)
 
-        Returns
-        -------
-        int :
-            number of viewer closed.
+        for n in self.__fields__:
+            attr = getattr(self, n)
+            if isinstance(getattr(attr, 'events', None), EmitterGroup):
+                yield from iter_connections(attr.events)
 
-        """
-        # copy to not iterate while changing.
-        viewers = [v for v in cls._instances]
-        ret = len(viewers)
-        for viewer in viewers:
-            viewer.close()
-        return ret
+        for layer in self.layers:
+            yield from iter_connections(layer.events)
 
 
-def current_viewer() -> Optional[Viewer]:
+def current_viewer() -> Viewer:
     """Return the currently active napari viewer."""
     try:
         from napari._qt.qt_main_window import _QtMainWindow

@@ -2,6 +2,8 @@
 Custom Qt widgets that serve as native objects that the public-facing elements
 wrap.
 """
+from __future__ import annotations
+
 import inspect
 import os
 import sys
@@ -10,16 +12,28 @@ import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     ClassVar,
     Dict,
+    Iterator,
     List,
     Optional,
     Sequence,
     Tuple,
+    Type,
 )
 from weakref import WeakValueDictionary
 
-from qtpy.QtCore import QEvent, QEventLoop, QPoint, QProcess, QSize, Qt, Slot
+from qtpy.QtCore import (
+    QEvent,
+    QEventLoop,
+    QObject,
+    QPoint,
+    QProcess,
+    QSize,
+    Qt,
+    Slot,
+)
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
@@ -37,6 +51,7 @@ from ..plugins import plugin_manager
 from ..settings import get_settings
 from ..utils import perf
 from ..utils._proxies import PublicOnlyProxy
+from ..utils.events import EmitterGroup
 from ..utils.io import imsave
 from ..utils.misc import in_jupyter, running_as_bundled_app
 from ..utils.notifications import Notification
@@ -73,12 +88,13 @@ class _QtMainWindow(QMainWindow):
     # We use this instead of QApplication.activeWindow for compatibility with
     # IPython usage. When you activate IPython, it will appear that there are
     # *no* active windows, so we want to track the most recently active windows
-    _instances: ClassVar[List['_QtMainWindow']] = []
+    _instances: ClassVar[List[_QtMainWindow]] = []
 
-    def __init__(self, viewer: 'Viewer', parent=None) -> None:
+    def __init__(self, viewer: Viewer, parent=None) -> None:
         super().__init__(parent)
         self._ev = None
         self._qt_viewer = QtViewer(viewer, show_welcome_screen=True)
+        self._viewer = viewer
         self._quit_app = False
 
         self.setWindowIcon(QIcon(self._window_icon))
@@ -126,7 +142,7 @@ class _QtMainWindow(QMainWindow):
                 self._qt_viewer.canvas._backend.screen_changed
             )
 
-    def statusBar(self) -> 'ViewerStatusBar':
+    def statusBar(self) -> ViewerStatusBar:
         return super().statusBar()
 
     @classmethod
@@ -134,7 +150,7 @@ class _QtMainWindow(QMainWindow):
         return cls._instances[-1] if cls._instances else None
 
     @classmethod
-    def current_viewer(cls):
+    def current_viewer(cls) -> Optional[Viewer]:
         window = cls.current()
         return window._qt_viewer.viewer if window else None
 
@@ -149,6 +165,7 @@ class _QtMainWindow(QMainWindow):
         if e.type() == QEvent.Close:
             # when we close the MainWindow, remove it from the instances list
             try:
+                print("REMOVEING")
                 _QtMainWindow._instances.remove(self)
             except ValueError:
                 pass
@@ -333,6 +350,14 @@ class _QtMainWindow(QMainWindow):
 
         super().resizeEvent(event)
 
+    def _disconnect_ui(self):
+        for _, _, rcvr, _, disconn in _iter_viewer_connections(self._viewer):
+            if (
+                isinstance(rcvr, (QObject, Window))
+                or 'vispy' in type(rcvr).__name__.lower()
+            ):
+                disconn()
+
     def closeEvent(self, event):
         """This method will be called when the main window is closing.
 
@@ -356,6 +381,12 @@ class _QtMainWindow(QMainWindow):
             for _i in range(5):
                 time.sleep(0.1)
                 QApplication.processEvents()
+        try:
+            self._qt_viewer.close()
+        except RuntimeError:
+            pass
+        self._disconnect_ui()
+        QApplication.processEvents()
 
         if self._quit_app:
             quit_app()
@@ -404,7 +435,7 @@ class Window:
         Window menu.
     """
 
-    def __init__(self, viewer: 'Viewer', *, show: bool = True):
+    def __init__(self, viewer: Viewer, *, show: bool = True):
         # create QApplication if it doesn't already exist
         get_app()
 
@@ -446,6 +477,9 @@ class Window:
             self._add_viewer_dock_widget(
                 self._qt_viewer.dockPerformance, menu=self.window_menu
             )
+
+        self.events = EmitterGroup(self, False, closed=None)
+        self._qt_window.destroyed.connect(lambda *_: self.events.closed())
 
         viewer.events.status.connect(self._status_changed)
         viewer.events.help.connect(self._help_changed)
@@ -1011,15 +1045,7 @@ class Window:
             If the viewer.window has already been closed and deleted.
         """
         settings = get_settings()
-        try:
-            self._qt_window.show(block=block)
-        except (AttributeError, RuntimeError):
-            raise RuntimeError(
-                trans._(
-                    "This viewer has already been closed and deleted. Please create a new one.",
-                    deferred=True,
-                )
-            )
+        self._qt_window.show(block=block)
 
         if settings.application.first_time:
             settings.application.first_time = False
@@ -1129,7 +1155,7 @@ class Window:
         """Restart the napari application."""
         self._qt_window.restart()
 
-    def _screenshot(self, flash=True, canvas_only=False) -> 'QImage':
+    def _screenshot(self, flash=True, canvas_only=False) -> QImage:
         """Capture screenshot of the currently displayed viewer.
 
         Parameters
@@ -1219,12 +1245,10 @@ class Window:
         # if we still have one.
         if hasattr(self, '_qt_window'):
             self._teardown()
-            self._qt_viewer.close()
             self._qt_window.close()
-            del self._qt_window
 
 
-def _instantiate_dock_widget(wdg_cls, viewer: 'Viewer'):
+def _instantiate_dock_widget(wdg_cls, viewer: Viewer):
     # if the signature is looking a for a napari viewer, pass it.
     from ..viewer import Viewer
 
@@ -1246,3 +1270,20 @@ def _instantiate_dock_widget(wdg_cls, viewer: 'Viewer'):
 
     # instantiate the widget
     return wdg_cls(**kwargs)
+
+
+def _iter_viewer_connections(
+    viewer: Viewer,
+) -> Iterator[Tuple[Type, Optional[str], Optional[object], str, Callable]]:
+    """yields (SourceType, event_name, receiver, method_name, disconnector)"""
+    from ..utils.events import EmitterGroup, iter_connections
+
+    yield from iter_connections(viewer.events)
+
+    for n in viewer.__fields__:
+        attr = getattr(viewer, n)
+        if isinstance(getattr(attr, 'events', None), EmitterGroup):
+            yield from iter_connections(attr.events)
+
+    for layer in viewer.layers:
+        yield from iter_connections(layer.events)

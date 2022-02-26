@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING
+from functools import partial
+from typing import TYPE_CHECKING, Callable, Iterator, Optional, Tuple, Type
 
 if TYPE_CHECKING:
     from typing import Callable
 
     from typing_extensions import Protocol
+
+    from .event import EmitterGroup
 
     class Emitter(Protocol):
         def connect(self, callback: Callable):
@@ -63,3 +66,25 @@ def connect_setattr_value(emitter: Emitter, obj, attr: str):
         setattr(ref(), attr, value.value)
 
     emitter.connect(_cb)
+
+
+def iter_connections(
+    group: EmitterGroup, seen=None
+) -> Iterator[Tuple[Type, Optional[str], Optional[object], str, Callable]]:
+    """Yields (SourceType, event_name, receiver, method_name, disconnector)
+    for all connections in the EmitterGroup, recursively
+    """
+    from .event import EmitterGroup
+
+    seen = seen or set()
+    for emitter in group.emitters.values():
+        for cb in emitter.callbacks:
+            if isinstance(cb, EmitterGroup):
+                if id(cb) not in seen:
+                    seen.add(id(cb))
+                    iter_connections(cb, seen)
+            elif isinstance(cb, tuple):
+                source_type = type(group.source)
+                ev_type = emitter.default_args.get("type")
+                disconnect = partial(emitter.disconnect, cb)
+                yield (source_type, ev_type, cb[0](), cb[1], disconnect)
