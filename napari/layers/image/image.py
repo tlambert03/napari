@@ -559,6 +559,8 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
     def complex_rendering(self, rendering: str):
         self._complex_rendering = ComplexRendering(rendering)
         self.events.complex_rendering()
+        if self._keep_auto_contrast:
+            self.reset_contrast_limits()
 
     @property
     def depiction(self):
