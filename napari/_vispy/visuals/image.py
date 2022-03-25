@@ -1,4 +1,4 @@
-from vispy.scene.visuals import Image as BaseImage
+from vispy.scene.visuals import ComplexImage as BaseImage
 
 
 # If data is not present, we need bounds to be None (see napari#3517)

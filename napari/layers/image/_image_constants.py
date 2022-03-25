@@ -92,6 +92,22 @@ class ImageRendering(StringEnum):
     AVERAGE = auto()
 
 
+class ComplexRendering(StringEnum):
+    """Rendering mode for the complex-valued data.
+
+    Selects a preset complex_mode in vispy
+        * real:
+        * imaginary:
+        * magnitude:
+        * phase:
+    """
+
+    REAL = auto()
+    IMAGINARY = auto()
+    MAGNITUDE = auto()
+    PHASE = auto()
+
+
 class VolumeDepiction(StringEnum):
     """Depiction: 3D depiction mode for images.
 

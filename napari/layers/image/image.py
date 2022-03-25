@@ -22,6 +22,7 @@ from ..intensity_mixin import IntensityVisualizationMixin
 from ..utils.layer_utils import calc_data_range
 from ..utils.plane import SlicingPlane
 from ._image_constants import (
+    ComplexRendering,
     ImageRendering,
     Interpolation,
     Interpolation3D,
@@ -36,10 +37,17 @@ from ._image_mouse_bindings import (
 )
 from ._image_slice import ImageSlice
 from ._image_slice_data import ImageSliceData
-from ._image_utils import guess_multiscale, guess_rgb
+from ._image_utils import guess_complex, guess_multiscale, guess_rgb
 
 if TYPE_CHECKING:
     from ...components.experimental.chunk import ChunkRequest
+
+RENDER_COMPLEX = {
+    "magnitude": np.abs,
+    "phase": np.angle,
+    "real": np.real,
+    "imaginary": np.imag,
+}
 
 
 # It is important to contain at least one abstractmethod to properly exclude this class
@@ -185,6 +193,9 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
     rendering : str
         Rendering mode used by vispy. Must be one of our supported
         modes.
+    complex_rendering : str
+        Rendering mode for complex-valued data. Must be one of 'magnitude',
+        'phase', 'real', 'imaginary'
     depiction : str
         3D Depiction mode used by vispy. Must be one of our supported modes.
     iso_threshold : float
@@ -219,6 +230,7 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
         gamma=1,
         interpolation='nearest',
         rendering='mip',
+        complex_rendering='magnitude',
         iso_threshold=0.5,
         attenuation=0.05,
         name=None,
@@ -286,6 +298,7 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
             mode=Event,
             interpolation=Event,
             rendering=Event,
+            complex_rendering=Event,
             depiction=Event,
             iso_threshold=Event,
             attenuation=Event,
@@ -295,6 +308,11 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
 
         # Set data
         self.rgb = rgb
+        self.is_complex = (
+            guess_complex(data[-1]) if self.multiscale else guess_complex(data)
+        )
+        self._complex_rendering = None
+        self.complex_rendering = complex_rendering
         self._data = data
         if self.multiscale:
             self._data_level = len(self.data) - 1
@@ -405,6 +423,8 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
                     mode=mode,
                 )
             )
+        if self.is_complex:
+            input_data = RENDER_COMPLEX[self.complex_rendering](input_data)
         return calc_data_range(input_data, rgb=self.rgb)
 
     @property
@@ -425,6 +445,9 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
     def data(
         self, data: Union[LayerDataProtocol, Sequence[LayerDataProtocol]]
     ):
+        self.is_complex = (
+            guess_complex(data[-1]) if self.multiscale else guess_complex(data)
+        )
         self._data_raw = data
         # note, we don't support changing multiscale in an Image instance
         self._data = MultiScaleData(data) if self.multiscale else data  # type: ignore
@@ -527,6 +550,15 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
         else:
             self._interpolation[self._ndisplay] = Interpolation(interpolation)
         self.events.interpolation(value=self._interpolation[self._ndisplay])
+
+    @property
+    def complex_rendering(self):
+        return str(self._complex_rendering)
+
+    @complex_rendering.setter
+    def complex_rendering(self, rendering: str):
+        self._complex_rendering = ComplexRendering(rendering)
+        self.events.complex_rendering()
 
     @property
     def depiction(self):
@@ -830,6 +862,9 @@ class _ImageBase(IntensityVisualizationMixin, Layer):
         dtype = np.dtype(image.dtype)
         if dtype in [np.dtype(np.float16)]:
             image = image.astype(np.float32)
+
+        if np.iscomplexobj(image):
+            image = RENDER_COMPLEX[self.complex_rendering](image)
 
         raw_zoom_factor = np.divide(
             self._thumbnail_shape[:2], image.shape[:2]

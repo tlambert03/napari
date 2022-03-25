@@ -60,6 +60,7 @@ class VispyImageLayer(VispyBaseLayer):
         self.layer.events.rendering.connect(self._on_rendering_change)
         self.layer.events.depiction.connect(self._on_depiction_change)
         self.layer.events.interpolation.connect(self._on_interpolation_change)
+        self.layer.events.complex_rendering.connect(self._on_complex_change)
         self.layer.events.colormap.connect(self._on_colormap_change)
         self.layer.events.contrast_limits.connect(
             self._on_contrast_limits_change
@@ -114,7 +115,8 @@ class VispyImageLayer(VispyBaseLayer):
     def _set_node_data(self, node, data):
         """Our self.layer._data_view has been updated, update our node."""
 
-        data = fix_data_dtype(data)
+        if np.dtype(data.dtype) not in (np.complex64, np.complex128):
+            data = fix_data_dtype(data)
 
         if self.layer._ndisplay == 3 and self.layer.ndim == 2:
             data = np.expand_dims(data, axis=0)
@@ -167,6 +169,10 @@ class VispyImageLayer(VispyBaseLayer):
         if len(self.node.shared_program.frag._set_items) > 0:
             self.node.gamma = self.layer.gamma
 
+    def _on_complex_change(self):
+        if self.layer.is_complex:
+            self.node.complex_mode = self.layer.complex_rendering
+
     def _on_iso_threshold_change(self):
         if isinstance(self.node, VolumeNode):
             self.node.threshold = self.layer.iso_threshold
@@ -190,6 +196,7 @@ class VispyImageLayer(VispyBaseLayer):
     def reset(self, event=None):
         super().reset()
         self._on_interpolation_change()
+        self._on_complex_change()
         self._on_colormap_change()
         self._on_contrast_limits_change()
         self._on_gamma_change()

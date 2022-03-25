@@ -104,3 +104,8 @@ def guess_labels(data):
         return 'labels'
 
     return 'image'
+
+
+def guess_complex(obj):
+    """Dask-safe way to check whether an array is complex."""
+    return getattr(obj, 'dtype', None) in (np.complex64, np.complex128)
