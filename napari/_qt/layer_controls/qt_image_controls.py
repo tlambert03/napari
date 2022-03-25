@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
 from superqt import QLabeledDoubleSlider
 
 from ...layers.image._image_constants import (
+    ComplexRendering,
     ImageRendering,
     Interpolation,
     Interpolation3D,
@@ -58,9 +59,13 @@ class QtImageControls(QtBaseImageControls):
 
         self.layer.events.interpolation.connect(self._on_interpolation_change)
         self.layer.events.rendering.connect(self._on_rendering_change)
+        self.layer.events.complex_rendering.connect(
+            self._on_complex_rendering_change
+        )
         self.layer.events.iso_threshold.connect(self._on_iso_threshold_change)
         self.layer.events.attenuation.connect(self._on_attenuation_change)
         self.layer.events._ndisplay.connect(self._on_ndisplay_change)
+        self.layer.events.data.connect(self._on_data_change)
         self.layer.events.depiction.connect(self._on_depiction_change)
         self.layer.plane.events.thickness.connect(
             self._on_plane_thickness_change
@@ -134,7 +139,15 @@ class QtImageControls(QtBaseImageControls):
         sld.valueChanged.connect(self.changeAttenuation)
         self.attenuationSlider = sld
         self.attenuationLabel = QLabel(trans._('attenuation:'))
+
+        # complex value combo
+        self.complexLabel = QLabel('complex:')
+        self.complexComboBox = QComboBox()
+        self.complexComboBox.addItems(ComplexRendering.keys())
+        self.complexComboBox.currentTextChanged.connect(self.changeComplex)
+
         self._on_ndisplay_change()
+        self._on_data_change()
 
         colormap_layout = QHBoxLayout()
         if hasattr(self.layer, 'rgb') and self.layer.rgb:
@@ -171,7 +184,9 @@ class QtImageControls(QtBaseImageControls):
         self.grid_layout.addWidget(self.isoThresholdSlider, 11, 1)
         self.grid_layout.addWidget(self.attenuationLabel, 12, 0)
         self.grid_layout.addWidget(self.attenuationSlider, 12, 1)
-        self.grid_layout.setRowStretch(13, 1)
+        self.grid_layout.addWidget(self.complexLabel, 13, 0)
+        self.grid_layout.addWidget(self.complexComboBox, 13, 1)
+        self.grid_layout.setRowStretch(14, 1)
         self.grid_layout.setColumnStretch(1, 1)
         self.grid_layout.setSpacing(4)
 
@@ -233,6 +248,9 @@ class QtImageControls(QtBaseImageControls):
         with self.layer.events.blocker(self._on_iso_threshold_change):
             self.layer.iso_threshold = value / 100
 
+    def changeComplex(self, text):
+        self.layer.complex_rendering = text
+
     def _on_iso_threshold_change(self):
         """Receive layer model isosurface change event and update the slider."""
         with self.layer.events.iso_threshold.blocker():
@@ -279,6 +297,12 @@ class QtImageControls(QtBaseImageControls):
             )
             self.renderComboBox.setCurrentIndex(index)
             self._toggle_rendering_parameter_visbility()
+
+    def _on_complex_rendering_change(self):
+        """Set the name of the complex_rendering mode upon change."""
+        mode = self.layer.complex_rendering
+        with self.layer.events.complex_rendering.blocker():
+            self.complexComboBox.setCurrentText(mode)
 
     def _on_depiction_change(self):
         """Receive layer model depiction change event and update combobox."""
@@ -351,6 +375,14 @@ class QtImageControls(QtBaseImageControls):
             self._toggle_rendering_parameter_visbility()
             self.depictionComboBox.show()
             self.depictionLabel.show()
+
+    def _on_data_change(self, event=None):
+        if self.layer.is_complex:
+            self.complexComboBox.show()
+            self.complexLabel.show()
+        else:
+            self.complexComboBox.hide()
+            self.complexLabel.hide()
 
 
 class PlaneNormalButtons(QWidget):
