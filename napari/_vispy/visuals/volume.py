@@ -1,4 +1,4 @@
-from vispy.scene.visuals import Volume as BaseVolume
+from vispy.scene.visuals import ComplexVolume as BaseVolume
 
 FUNCTION_DEFINITIONS = """
 // the tolerance for testing equality of floats with floatEqual and floatNotEqual
