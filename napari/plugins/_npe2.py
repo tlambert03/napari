@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
+    Any,
     DefaultDict,
     Dict,
     Iterator,
@@ -286,3 +288,53 @@ def _on_plugin_enablement_change(enabled: Set[str], disabled: Set[str]):
     for v in Viewer._instances:
         v.window.plugins_menu._build()
         v.window.file_menu._rebuild_samples_menu()
+
+
+@lru_cache
+def _sample_commands() -> dict:
+    # this feels very wrong... :/
+    # the point is that we'd like to be able to call `viewer.open_sample`
+    # when provided a command.id that corresponds to a sample_data.command
+    #
+    # alternatives might be interpreting *any* command that returns a list
+    # of layer-data as "intended" for adding to the viewer, and just doing so
+    # ...
+    pm = npe2.PluginManager.instance()
+    a = {}
+    for n, contribs in pm.iter_sample_data():
+        for contrib in contribs:
+            if cmd_id := getattr(contrib, 'command', ''):
+                a[cmd_id] = (n, contrib.key)
+    return a
+
+
+def _exec_command(cmd_id: str) -> Any:
+    """execute an npe2 command id, with some "injected semantics".
+
+    The problem this is trying to solve (temporarily?) is that we don't
+    necessarily have enough semantic information about what an npe2 command
+    provided by a plugin is going to do, or rather what the "intention" is.
+
+    For example, a command might simply return a list of numpy arrays.  If that
+    command id is *also* listed in the sample_data section, then we "know
+    what to do" that those arrays (i.e. add them to the viewer).  there are
+    alternatives:
+
+    1. This additional semantic information could conceivably also come from
+    return type annotations. (e.g. calling *any* command that returns a
+    list if LayerData will result in that data being added to the viewer.)
+    2. We could instead expect plugin commands to do the action on the viewer
+    themselves. (e.g. a sample data command would call
+    `current_viewer().add_image()` itself).  this is the "vscode" approach,
+    but obviously has the downside of potential heterogeneity among plugin
+    behavior.
+    """
+    pm = npe2.PluginManager.instance()
+    cmd = pm.get_command(cmd_id)
+    smp_cmds = _sample_commands()
+    if cmd.id in smp_cmds:
+        from napari import current_viewer
+
+        if viewer := current_viewer():
+            return viewer.open_sample(*smp_cmds[cmd.id])
+    return cmd.exec()
