@@ -28,6 +28,7 @@ class Source(BaseModel):
     reader_plugin: Optional[str] = None
     sample: Optional[Tuple[str, str]] = None
     widget: Optional[FunctionGui] = None
+    command: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

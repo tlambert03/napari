@@ -1,11 +1,16 @@
-from functools import wraps
+from __future__ import annotations
+
+from functools import partial, wraps
 from inspect import isgeneratorfunction, signature
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from typing_extensions import get_type_hints
 
 if TYPE_CHECKING:
     from ..layers import Layer
+    from ..types import LayerData
+    from ..viewer import Viewer
+
 
 T = TypeVar("T")
 
@@ -48,10 +53,80 @@ def get_accessor(type_: Type[T]) -> Optional[Callable[[], Optional[T]]]:
             return _get_active_layer_list
 
 
+def _add_layer_data_tuple(data: Union[LayerData, List[LayerData]]):
+    from ..viewer import current_viewer
+    from ..layers._source import layer_source
+
+    added = []
+    if viewer := current_viewer():
+        for datum in data if isinstance(data, list) else [data]:
+            added.extend(viewer._add_layer_from_data(*datum))
+    return added
+
+
+def _add_layer_data_tuples(data: Any):
+    from ..viewer import current_viewer
+    from ..layers._source import layer_source
+
+    added = []
+    if viewer := current_viewer():
+        for datum in data if isinstance(data, list) else [data]:
+            added.extend(viewer._add_layer_from_data(*datum))
+    return added
+
+
+def _add_layer_data_to_viewer(data: Any, return_type: Any, viewer: Optional[Viewer]=None):
+    """Show a result in the viewer.
+
+    Parameters
+    ----------
+    data : Any
+        The result of the function call. For this function, this should be
+        *just* the data part of the corresponding layer type.
+    return_type : Any
+        The return annotation that was used in the decorated function.
+    viewer : Optional[Viewer]
+        an optional viewer to use.  otherwise use current viewer.
+        
+    Examples
+    --------
+    This allows the user to do this, and add the result as a viewer Image.
+
+    >>> def make_layer() -> napari.types.ImageData:
+    ...     return np.random.rand(256, 256)
+
+    """
+    from ..viewer import current_viewer
+
+    if viewer is None:
+        viewer = current_viewer()
+    if not viewer or data is None:
+        return
+
+    layer_type = return_type.__name__.replace("Data", "").lower()
+    getattr(viewer, f'add_{layer_type}')(data=data)  # add a name?
+
+
+def get_processor(type_: Type[T]) -> Optional[Callable[[], Optional[T]]]:
+    """Return processor function for a given type.
+
+    A processor is a function that can "process" a given return type.  The term
+    process here leaves a lot of ambiguity, it mostly means the function "can
+    do something" with a single input of the given type. For example, given
+    type `napari.types.LayerData`, we return a function that can be called to
+    add a layer data tuple to the currently active viewer.
+    """
+    from .. import types
+    
+    if type_ in (types._LayerDataTypes):
+        return partial(_add_layer_data_to_viewer, return_type=type_)
+
+
 def napari_type_hints(obj: Any) -> Dict[str, Any]:
     import napari
 
-    from .. import components, layers, viewer
+    from .. import components, layers, viewer, types
+    import typing
 
     return get_type_hints(
         obj,
@@ -60,6 +135,8 @@ def napari_type_hints(obj: Any) -> Dict[str, Any]:
             **viewer.__dict__,
             **layers.__dict__,
             'LayerList': components.LayerList,
+            **typing.__dict__,
+            **types.__dict__,
         },
     )
 
@@ -94,16 +171,21 @@ def inject_napari_dependencies(func: Callable) -> Callable:
     Callable
         A function with napari dependencies injected
     """
-    if not func.__code__.co_argcount:
+    if not func.__code__.co_argcount and 'return' not in getattr(func, '__annotations__', {}):
         return func
 
     sig = signature(func)
     # get type hints for the object, with forward refs of napari hints resolved
     hints = napari_type_hints(func)
+
     # get accessor functions for each required parameter
     accessors = {}
+    processor: Optional[Callable] = None
     for name, hint in hints.items():
-        if sig.parameters[name].default is sig.empty:
+        print(hint, hash(hint))
+        if name == 'return':
+            processor = get_processor(hint)
+        elif sig.parameters[name].default is sig.empty:
             accessor = get_accessor(hint)
             if accessor:
                 accessors[name] = accessor
@@ -117,7 +199,9 @@ def inject_napari_dependencies(func: Callable) -> Callable:
         # their own objects if desired.
         # (i.e. the injected deps are only used if needed)
         _kwargs.update(**sig.bind_partial(*args, **kwargs).arguments)
-        return func(**_kwargs)
+        result = func(**_kwargs)
+        if processor is not None:
+            processor(result)
 
     out = _exec
 
