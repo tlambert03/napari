@@ -551,7 +551,7 @@ PluginListItem#unavailable {
 
 PluginListItem QCheckBox::indicator:disabled {
   background-color: {{ opacity(foreground, 127) }};
-  image: url(":/themes/{{ name }}/check_50.svg");
+  image: url("theme_{{ name }}:/check_50.svg");
 }
 
 QPushButton#install_button {
@@ -781,7 +781,6 @@ QtLayerList::indicator {
 
 QtLayerList::indicator:unchecked {
   image: url("theme_{{ name }}:/visibility_off_50.svg");
-
 }
 
 QtLayerList::indicator:checked {
