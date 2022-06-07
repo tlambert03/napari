@@ -102,29 +102,19 @@ EXPECTED_NUMBER_OF_LAYER_METHODS = {
 # other.
 
 
-unrolled_layer_data = []
-for layer_class, data, ndim in layer_test_data:
-    methods = _get_all_keybinding_methods(layer_class)
-    for func in methods:
-        unrolled_layer_data.append(
-            (layer_class, data, ndim, func, len(methods))
-        )
 
-
-@pytest.mark.parametrize(
-    'layer_class, data, ndim, func, Nmeth', unrolled_layer_data
-)
-@pytest.mark.parametrize('visible', [True, False])
+@pytest.mark.parametrize('layer_class, data, ndim', layer_test_data)
 def test_add_layer(
-    make_napari_viewer, layer_class, data, ndim, func, Nmeth, visible
+    make_napari_viewer, layer_class, data, ndim
 ):
     viewer = make_napari_viewer()
-    layer = add_layer_by_type(viewer, layer_class, data, visible=visible)
+    layer = add_layer_by_type(viewer, layer_class, data, visible=True)
     check_viewer_functioning(viewer, viewer.window._qt_viewer, data, ndim)
 
-    func(layer)
+    for func in layer.class_keymap.values():
+        func(layer)
 
-    assert Nmeth == EXPECTED_NUMBER_OF_LAYER_METHODS[layer_class.__name__]
+    # assert Nmeth == EXPECTED_NUMBER_OF_LAYER_METHODS[layer_class.__name__]
 
 
 @pytest.mark.parametrize('layer_class, a_unique_name, ndim', layer_test_data)
