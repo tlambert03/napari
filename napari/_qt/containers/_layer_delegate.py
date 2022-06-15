@@ -180,7 +180,9 @@ class LayerDelegate(QStyledItemDelegate):
         To add a new item to the menu, update the _LAYER_ACTIONS dict.
         """
         if not hasattr(self, '_context_menu'):
-            self._context_menu = QtActionContextMenu(_LAYER_ACTIONS)
+            self._context_menu = QtActionContextMenu(
+                _LAYER_ACTIONS, menu_id='/napari/layers/context'
+            )
 
         layer_list: LayerList = model.sourceModel()._root
         self._context_menu.update_from_context(get_context(layer_list))
@@ -188,4 +190,8 @@ class LayerDelegate(QStyledItemDelegate):
         if action is not None and isinstance(action.data(), dict):
             # action.data will be a callable that accepts a layer_list instance
             if action := action.data().get('action'):
-                QTimer.singleShot(0, action)
+                # using lambda here because for some reason, if you pass a bound method
+                # it can result in a "unhashable" type error.  but the lambda is fine.
+                # using singleshot here because we want the action to be called after
+                # the context menu is closed.
+                QTimer.singleShot(0, lambda: action())

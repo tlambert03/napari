@@ -10,12 +10,39 @@ from typing import (
     cast,
 )
 
+from npe2 import plugin_manager as pm
+from npe2.manifest import contributions
 from qtpy.QtWidgets import QAction, QMenu
 
 from ...utils.context._expressions import Expr
 
 if TYPE_CHECKING:
     from ...layers._layer_actions import MenuItem, SubMenu
+
+
+def _convert_to_menu_item(item: contributions.MenuItem) -> MenuItem:
+    print("item", item)
+
+    if isinstance(item, contributions.MenuCommand):
+        return {
+            item.command: {
+                'description': pm.get_command(item.command).title,
+                'enable_when': True,
+                'show_when': True,
+                'action': item.exec,
+            }
+        }
+    subitems = {}
+    for subitem in pm.iter_menu(item.submenu):
+        subitems |= _convert_to_menu_item(subitem)
+    return {
+        pm.get_submenu(item.submenu).id: {
+            'description': pm.get_submenu(item.submenu).label,
+            'enable_when': True,
+            'show_when': True,
+            'action_group': subitems,
+        }
+    }
 
 
 class QtActionContextMenu(QMenu):
@@ -82,11 +109,19 @@ class QtActionContextMenu(QMenu):
     """
 
     def __init__(
-        self, actions: Union[MenuItem, Sequence[MenuItem]], parent=None
+        self,
+        actions: Union[MenuItem, Sequence[MenuItem]],
+        parent=None,
+        menu_id: str = '',
     ):
         super().__init__(parent)
         if not isinstance(actions, Sequence):
             actions = [actions]
+
+        if menu_id:
+            for item in pm.iter_menu(menu_id):
+                actions.append(_convert_to_menu_item(item))
+
         self._submenus: List[QtActionContextMenu] = []
         self._build_menu(actions)
 
