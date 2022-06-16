@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from ... import Viewer
     from ..qt_main_window import Window
 
+from npe2.manifest.contributions import MenuCommand, Submenu
 
 class FileMenu(NapariMenu):
     def __init__(self, window: 'Window'):

@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 
 def _convert_to_menu_item(item: contributions.MenuItem) -> MenuItem:
-    print("item", item)
 
     if isinstance(item, contributions.MenuCommand):
         return {
