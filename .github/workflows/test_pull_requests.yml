@@ -119,7 +119,7 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Cache tox Virtualenv
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: runner.os == 'Linux'
         env:
           cache-name: cache-tox-${{ matrix.platform }}-${{ matrix.python }}-${{ matrix.toxenv || matrix.backend }}-${{ steps.date.outputs.date }}
