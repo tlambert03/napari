@@ -34,6 +34,8 @@ if TYPE_CHECKING:
         TranslationOrStr,
     )
 
+DisposeCallable = Callable[[], None]
+
 
 class RegisteredCommand(NamedTuple):
     id: str
@@ -57,7 +59,7 @@ class CommandsRegistry:
         id: CommandId,
         callback: Callable,
         description: Optional[str] = None,
-    ) -> Callable:
+    ) -> DisposeCallable:
         commands = self._commands.setdefault(id, [])
 
         cmd = RegisteredCommand(id, run=callback, description=description)
@@ -96,7 +98,9 @@ class KeybindingsRegistry:
             cls.__instance = cls()
         return cls.__instance
 
-    def register_keybinding_rule(self, id: CommandId, rule: KeybindingRule):
+    def register_keybinding_rule(
+        self, id: CommandId, rule: KeybindingRule
+    ) -> Optional[DisposeCallable]:
         if bound_keybinding := rule._bind_to_current_platform():
             entry = RegisteredKeyBinding(
                 keybinding=bound_keybinding,
@@ -106,6 +110,12 @@ class KeybindingsRegistry:
             )
             self._coreKeybindings.append(entry)
             self.registered.emit()
+
+            def _dispose():
+                self._coreKeybindings.remove(entry)
+
+            return _dispose
+        return None  # pragma: no cover
 
     def __iter__(self) -> Iterator[RegisteredKeyBinding]:
         yield from self._coreKeybindings
@@ -123,31 +133,40 @@ class MenuRegistry:
             cls.__instance = cls()
         return cls.__instance
 
-    def append_menu_items(self, items: Sequence[Tuple[MenuId, MenuItem]]):
-        if not items:
-            return
+    def append_menu_items(
+        self, items: Sequence[Tuple[MenuId, MenuItem]]
+    ) -> DisposeCallable:
         changed_ids: Set[MenuId] = set()
+        disposers = []
 
         for id, item in items:
             menu_list = self._menu_items.setdefault(id, [])
             menu_list.append(item)
             changed_ids.add(id)
+            disposers.append(lambda: menu_list.remove(item))
+
+        def _dispose():
+            for disposer in disposers:
+                disposer()
+            for id in changed_ids:
+                if not self._menu_items.get(id):
+                    del self._menu_items[id]
 
         if changed_ids:
             self.menus_changed.emit(changed_ids)
 
+        return _dispose
+
     def add_commands(self, *commands: CommandRule):
         for command in commands:
             self._commands[command.id] = command
+        # TODO: signal?
 
     def __iter__(self) -> Iterator[Tuple[MenuId, List[MenuItem]]]:
         yield from self._menu_items.items()
 
     def __contains__(self, id: object) -> bool:
         return id in self._menu_items
-
-
-DisposeCallable = Callable[[], None]
 
 
 @overload
@@ -269,11 +288,11 @@ def register_action(
         return _register_action(id_or_action)
     if isinstance(id_or_action, str):
         if title is None:
-            raise ValueError("title is required")
+            raise ValueError("'title' is required when 'id' is a string")
         _kwargs = locals().copy()
         _kwargs['id'] = _kwargs.pop("id_or_action")
         return _register_action_str(**_kwargs)
-    raise ValueError('id_or_action must be a string or an Action')
+    raise ValueError("'id_or_action' must be a string or an Action")
 
 
 def _register_action_str(
@@ -313,20 +332,25 @@ def _register_action(action: Action) -> DisposeCallable:
     ]
 
     # menu
-    MenuRegistry.instance().append_menu_items(
-        [
-            (rule.id, MenuItem(command=action, **rule.dict()))
-            for rule in action.menus or ()
-        ]
+
+    disposers.append(
+        MenuRegistry.instance().append_menu_items(
+            [
+                (rule.id, MenuItem(command=action, **rule.dict()))
+                for rule in action.menus or ()
+            ]
+        )
     )
     if action.add_to_command_palette:
+        # TODO: dispose?
         MenuRegistry.instance().add_commands(action)
 
     # keybinding
     for keyb in action.keybindings or ():
-        KeybindingsRegistry.instance().register_keybinding_rule(
+        if _d := KeybindingsRegistry.instance().register_keybinding_rule(
             action.id, keyb
-        )
+        ):
+            disposers.append(_d)
 
     def _dispose():
         for d in disposers:
