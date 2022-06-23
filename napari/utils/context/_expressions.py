@@ -321,9 +321,7 @@ class Expr(ast.AST, Generic[T]):
 
     @classmethod
     def validate(cls, v):
-        if isinstance(v, Expr):
-            return v
-        return parse_expression(v)
+        return v if isinstance(v, Expr) else parse_expression(v)
 
 
 class Name(Expr[T], ast.Name):
