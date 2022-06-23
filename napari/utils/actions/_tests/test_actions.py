@@ -11,10 +11,23 @@ from napari.utils.actions._registries import (
     MenuRegistry,
 )
 
+PRIMARY_KEY = 'ctrl+a'
+OS_KEY = 'ctrl+b'
+
 KWARGS = [
     {},
     dict(menus=[{'id': MenuId.LAYERS_CONTEXT}]),
-    dict(keybindings=[{'primary': 'ctrl+a'}]),
+    dict(keybindings=[{'primary': PRIMARY_KEY}]),
+    dict(
+        keybindings=[
+            {
+                'primary': PRIMARY_KEY,
+                'mac': OS_KEY,
+                'windows': OS_KEY,
+                'linux': OS_KEY,
+            }
+        ]
+    ),
     dict(
         keybindings=[{'primary': 'ctrl+a'}],
         menus=[{'id': MenuId.LAYERS_CONTEXT}],
@@ -90,7 +103,8 @@ def test_register_action_decorator(kwargs, cmd_reg, key_reg, menu_reg, mode):
     # make sure keybindings are registered if specified
     if keybindings := kwargs.get('keybindings'):
         for entry in keybindings:
-            assert any(i.keybinding == entry['primary'] for i in key_reg)
+            key = PRIMARY_KEY if len(entry) == 1 else OS_KEY
+            assert any(i.keybinding == key for i in key_reg)
             key_reg.registered_emit.assert_called()
     else:
         assert not list(key_reg)
@@ -106,9 +120,9 @@ def test_register_action_decorator(kwargs, cmd_reg, key_reg, menu_reg, mode):
 
 def test_errors():
     with pytest.raises(ValueError, match="'title' is required"):
-        register_action('cmd_id')
-    with pytest.raises(ValueError, match="must be a string or an Action"):
-        register_action(None)
+        register_action('cmd_id')  # type: ignore
+    with pytest.raises(TypeError, match="must be a string or an Action"):
+        register_action(None)  # type: ignore
 
 
 def test_instances():

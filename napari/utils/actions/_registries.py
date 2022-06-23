@@ -281,7 +281,7 @@ def register_action(
     ------
     ValueError
         _description_
-    ValueError
+    TypeError
         _description_
     """
     if isinstance(id_or_action, Action):
@@ -292,7 +292,7 @@ def register_action(
         _kwargs = locals().copy()
         _kwargs['id'] = _kwargs.pop("id_or_action")
         return _register_action_str(**_kwargs)
-    raise ValueError("'id_or_action' must be a string or an Action")
+    raise TypeError("'id_or_action' must be a string or an Action")
 
 
 def _register_action_str(
