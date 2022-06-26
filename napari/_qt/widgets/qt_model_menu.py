@@ -11,7 +11,6 @@ from ...utils.actions._types import MenuItem, SubmenuItem
 if TYPE_CHECKING:
     from qtpy.QtGui import QIcon
 
-    from ...utils.actions import MenuId
     from ...utils.actions._types import Icon
 
 
@@ -20,7 +19,7 @@ def to_qicon(icon: Icon) -> QIcon:
 
 
 class QtModelMenu(QMenu):
-    def __init__(self, menu_id: MenuId, parent=None):
+    def __init__(self, menu_id: str, parent=None):
         super().__init__(parent)
         self._menu_id = menu_id
         self._submenu_item: Optional[SubmenuItem] = None

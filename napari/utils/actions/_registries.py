@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 from psygnal import Signal
 
 from ...utils.translations import trans
-from ._menus import MenuGroup, MenuId
+from ._menus import NapariMenu, NapariMenuGroup
 from ._types import (
     MenuItem,
     SubmenuItem,
@@ -190,7 +190,7 @@ class MenuRegistry:
     __instance: Optional[MenuRegistry] = None
 
     def __init__(self) -> None:
-        self._menu_items: Dict[MenuId, List[MenuOrSubmenu]] = {}
+        self._menu_items: Dict[str, List[MenuOrSubmenu]] = {}
         # TODO: do we need this?
         self._commands: Dict[CommandId, CommandRule] = {}
 
@@ -201,9 +201,9 @@ class MenuRegistry:
         return cls.__instance
 
     def append_menu_items(
-        self, items: Sequence[Tuple[MenuId, MenuOrSubmenu]]
+        self, items: Sequence[Tuple[str, MenuOrSubmenu]]
     ) -> DisposeCallable:
-        changed_ids: Set[MenuId] = set()
+        changed_ids: Set[str] = set()
         disposers = []
 
         for id, item in items:
@@ -232,14 +232,14 @@ class MenuRegistry:
 
     def __iter__(
         self,
-    ) -> Iterator[Tuple[MenuId, List[MenuOrSubmenu]]]:
+    ) -> Iterator[Tuple[str, List[MenuOrSubmenu]]]:
         yield from self._menu_items.items()
 
     def __contains__(self, id: object) -> bool:
         return id in self._menu_items
 
-    def __getitem__(self, id: MenuId) -> List[MenuOrSubmenu]:
-        return self._menu_items[id]
+    def get_menu(self, menu_id: str) -> List[MenuOrSubmenu]:
+        return self._menu_items[menu_id]
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -254,7 +254,7 @@ class MenuRegistry:
 
         branch = "  ├──"
         for menu in self._menu_items:
-            lines.append(menu.value)
+            lines.append(menu)
             for group in self.iter_menu_groups(menu):
                 first = next(iter(group))
                 lines.append(f"  ├───────────{first.group}───────────────")
@@ -266,17 +266,15 @@ class MenuRegistry:
                     else:
                         lines.extend(
                             [
-                                f"{branch} {child.submenu.value}",
+                                f"{branch} {child.submenu}",
                                 "  ├──  └── ...",
                             ]
                         )
             lines.append('')
         return lines
 
-    def iter_menu_groups(
-        self, menu_id: MenuId
-    ) -> Iterator[List[MenuOrSubmenu]]:
-        yield from MenuRegistry._sorted_groups(self[menu_id])
+    def iter_menu_groups(self, menu_id: str) -> Iterator[List[MenuOrSubmenu]]:
+        yield from MenuRegistry._sorted_groups(self.get_menu(menu_id))
 
     @staticmethod
     def _sorted_groups(
@@ -293,29 +291,24 @@ class MenuRegistry:
             yield sorted(groups[group_id], key=order_sorter)
 
 
-menu_registry = MenuRegistry.instance()
-commands_registry = CommandsRegistry.instance()
-keybindings_registry = KeybindingsRegistry.instance()
-
-
 def _register_submenus():
     MenuRegistry.instance().append_menu_items(
         [
             (
-                MenuId.LAYERLIST_CONTEXT,
+                NapariMenu.LAYERLIST_CONTEXT,
                 SubmenuItem(
-                    submenu=MenuId.LAYERS_CONVERT_DTYPE,
+                    submenu=NapariMenu.LAYERS_CONVERT_DTYPE,
                     title=trans._('Convert data type'),
-                    group=MenuGroup.LAYERLIST_CONTEXT.CONVERSION,
+                    group=NapariMenuGroup.LAYERLIST_CONTEXT.CONVERSION,
                     order=None,
                 ),
             ),
             (
-                MenuId.LAYERLIST_CONTEXT,
+                NapariMenu.LAYERLIST_CONTEXT,
                 SubmenuItem(
-                    submenu=MenuId.LAYERS_PROJECT,
+                    submenu=NapariMenu.LAYERS_PROJECT,
                     title=trans._('Projections'),
-                    group=MenuGroup.LAYERLIST_CONTEXT.SPLIT_MERGE,
+                    group=NapariMenuGroup.LAYERLIST_CONTEXT.SPLIT_MERGE,
                     order=None,
                 ),
             ),

@@ -41,7 +41,7 @@ from qtpy.QtCore import QPoint, QSize, Qt
 from qtpy.QtGui import QPixmap
 from qtpy.QtWidgets import QStyledItemDelegate
 
-from ...utils.actions import MenuId
+from ...utils.actions import NapariMenu
 from ...utils.context import get_context
 from ..qt_resources import QColoredSVGIcon
 from ..widgets.qt_model_menu import QtModelMenu
@@ -180,7 +180,7 @@ class LayerDelegate(QStyledItemDelegate):
         To add a new item to the menu, update the _LAYER_ACTIONS dict.
         """
         if not hasattr(self, '_context_menu'):
-            self._context_menu = QtModelMenu(MenuId.LAYERLIST_CONTEXT)
+            self._context_menu = QtModelMenu(NapariMenu.LAYERLIST_CONTEXT)
 
         layer_list: LayerList = model.sourceModel()._root
         self._context_menu.update_from_context(get_context(layer_list))

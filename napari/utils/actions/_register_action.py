@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from ._registries import CommandsRegistry, KeybindingsRegistry, MenuRegistry
 from ._types import Action, MenuItem
 
 if TYPE_CHECKING:
@@ -198,11 +197,15 @@ def _register_action_obj(action: Action) -> DisposeCallable:
 
     Helper for `register_action()`.
     """
+    from ._plugin_aware_registries import (
+        commands_registry,
+        keybindings_registry,
+        menu_registry,
+    )
+
     # command
     disposers = [
-        CommandsRegistry.instance().register_command(
-            action.id, action.run, action.title
-        )
+        commands_registry.register_command(action.id, action.run, action.title)
     ]
 
     # menu
@@ -214,14 +217,14 @@ def _register_action_obj(action: Action) -> DisposeCallable:
         )
         items.append((rule.id, menu_item))
 
-    disposers.append(MenuRegistry.instance().append_menu_items(items))
+    disposers.append(menu_registry.append_menu_items(items))
     if action.add_to_command_palette:
         # TODO: dispose
-        MenuRegistry.instance().add_commands(action)
+        menu_registry.add_commands(action)
 
     # keybinding
     for keyb in action.keybindings or ():
-        if _d := KeybindingsRegistry.instance().register_keybinding_rule(
+        if _d := keybindings_registry.register_keybinding_rule(
             action.id, keyb
         ):
             disposers.append(_d)

@@ -21,7 +21,6 @@ from pydantic import BaseModel, Field
 
 from ...utils import context
 from ...utils.translations import TranslationString
-from ._menus import MenuId
 
 WINDOWS = os.name == 'nt'
 MACOS = sys.platform == 'darwin'
@@ -29,6 +28,7 @@ LINUX = sys.platform.startswith("linux")
 
 TranslationOrStr = Union[TranslationString, str]
 CommandId = NewType("CommandId", str)
+MenuId = NewType("MenuId", str)
 KeyCode = NewType("KeyCode", str)
 IconCode = NewType("IconCode", str)
 CommandHandler = TypeVar("CommandHandler", bound=Callable[..., Any])
@@ -74,6 +74,16 @@ class Icon(BaseModel):
         description="Icon path when a light theme is used. These may be superqt "
         "fonticon keys, such as `fa5s.arrow_down`",
     )
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if isinstance(v, str):
+            v = {'dark': v, 'light': v}
+        return cls(v)
 
 
 class CommandRule(BaseModel):

@@ -12,7 +12,12 @@ from typing import TYPE_CHECKING, List, cast
 import numpy as np
 
 from ..utils._injection import inject_napari_dependencies
-from ..utils.actions import Action, MenuGroup, MenuId, register_action
+from ..utils.actions import (
+    Action,
+    NapariMenu,
+    NapariMenuGroup,
+    register_action,
+)
 from ..utils.context._layerlist_context import LayerListContextKeys as LLCK
 from ..utils.translations import trans
 from . import Image, Labels, Layer
@@ -163,16 +168,16 @@ def _project(ll: LayerList, axis: int = 0, mode='max'):
 
 
 LAYERCTX_SPLITMERGE: MenuRuleDict = {
-    'id': MenuId.LAYERLIST_CONTEXT,
-    'group': MenuGroup.LAYERLIST_CONTEXT.SPLIT_MERGE,
+    'id': NapariMenu.LAYERLIST_CONTEXT,
+    'group': NapariMenuGroup.LAYERLIST_CONTEXT.SPLIT_MERGE,
 }
 LAYERCTX_CONVERSION: MenuRuleDict = {
-    'id': MenuId.LAYERLIST_CONTEXT,
-    'group': MenuGroup.LAYERLIST_CONTEXT.CONVERSION,
+    'id': NapariMenu.LAYERLIST_CONTEXT,
+    'group': NapariMenuGroup.LAYERLIST_CONTEXT.CONVERSION,
 }
 LAYERCTX_LINK: MenuRuleDict = {
-    'id': MenuId.LAYERLIST_CONTEXT,
-    'group': MenuGroup.LAYERLIST_CONTEXT.LINK,
+    'id': NapariMenu.LAYERLIST_CONTEXT,
+    'group': NapariMenuGroup.LAYERLIST_CONTEXT.LINK,
 }
 
 _only_labels = LLCK.num_selected_labels_layers == LLCK.num_selected_layers
@@ -239,8 +244,8 @@ LAYER_ACTIONS: List[Action] = [
         title=trans._('Toggle visibility'),
         menus=[
             {
-                'id': MenuId.LAYERLIST_CONTEXT,
-                'group': MenuGroup.LAYERLIST_CONTEXT.NAVIGATION,
+                'id': NapariMenu.LAYERLIST_CONTEXT,
+                'group': NapariMenuGroup.LAYERLIST_CONTEXT.NAVIGATION,
             }
         ],
     ),
@@ -286,7 +291,7 @@ for _dtype in (
             title=trans._('Convert to {dtype}', dtype=_dtype),
             run=partial(_convert_dtype, mode=_dtype),
             enablement=(_only_labels & (LLCK.active_layer_dtype != _dtype)),
-            menus=[{'id': MenuId.LAYERS_CONVERT_DTYPE}],
+            menus=[{'id': NapariMenu.LAYERS_CONVERT_DTYPE}],
         )
     )
 
@@ -298,7 +303,7 @@ for mode in ('max', 'min', 'std', 'sum', 'mean', 'median'):
             title=trans._('{mode} projection', mode=mode.title()),
             run=partial(_project, mode=mode),
             enablement=_image_is_3d,
-            menus=[{'id': MenuId.LAYERS_PROJECT}],
+            menus=[{'id': NapariMenu.LAYERS_PROJECT}],
         )
     )
 

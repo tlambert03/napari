@@ -8,8 +8,8 @@ from napari.utils.actions import (
     Action,
     CommandsRegistry,
     KeybindingsRegistry,
-    MenuId,
     MenuRegistry,
+    NapariMenu,
     register_action,
 )
 from napari.utils.actions._types import CommandId
@@ -21,8 +21,8 @@ OS_KEY = 'ctrl+b'
 KWARGS = [
     {},
     dict(enablement=LayerListContextKeys.active_layer_is_rgb),
-    dict(menus=[{'id': MenuId.LAYERLIST_CONTEXT}]),
-    dict(enablement='3 >= 1', menus=[{'id': MenuId.LAYERLIST_CONTEXT}]),
+    dict(menus=[{'id': NapariMenu.LAYERLIST_CONTEXT}]),
+    dict(enablement='3 >= 1', menus=[{'id': NapariMenu.LAYERLIST_CONTEXT}]),
     dict(keybindings=[{'primary': PRIMARY_KEY}]),
     dict(
         keybindings=[
@@ -36,7 +36,7 @@ KWARGS = [
     ),
     dict(
         keybindings=[{'primary': 'ctrl+a'}],
-        menus=[{'id': MenuId.LAYERLIST_CONTEXT}],
+        menus=[{'id': NapariMenu.LAYERLIST_CONTEXT}],
     ),
 ]
 
