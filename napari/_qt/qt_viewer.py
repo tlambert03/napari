@@ -9,7 +9,7 @@ from weakref import WeakSet
 
 import numpy as np
 from qtpy.QtCore import QCoreApplication, QObject, Qt
-from qtpy.QtGui import QCursor, QGuiApplication
+from qtpy.QtGui import QCursor, QGuiApplication, QKeyEvent
 from qtpy.QtWidgets import QFileDialog, QSplitter, QVBoxLayout, QWidget
 
 from ..components._interaction_box_mouse_bindings import (
@@ -359,6 +359,7 @@ class QtViewer(QSplitter):
             size=self.viewer._canvas_size[::-1],
         )
         self.canvas.events.draw.connect(self.dims.enable_play)
+        self.canvas.events.draw.connect(self.on_draw)
 
         self.canvas.events.mouse_double_click.connect(
             self.on_mouse_double_click
@@ -366,14 +367,13 @@ class QtViewer(QSplitter):
         self.canvas.events.mouse_move.connect(self.on_mouse_move)
         self.canvas.events.mouse_press.connect(self.on_mouse_press)
         self.canvas.events.mouse_release.connect(self.on_mouse_release)
-        self.canvas.events.key_press.connect(
-            self._key_map_handler.on_key_press
-        )
-        self.canvas.events.key_release.connect(
-            self._key_map_handler.on_key_release
-        )
         self.canvas.events.mouse_wheel.connect(self.on_mouse_wheel)
-        self.canvas.events.draw.connect(self.on_draw)
+        # self.canvas.events.key_press.connect(
+        #     self._key_map_handler.on_key_press
+        # )
+        # self.canvas.events.key_release.connect(
+        #     self._key_map_handler.on_key_release
+        # )
         self.canvas.events.resize.connect(self.on_resize)
         self.canvas.bgcolor = transform_color(
             get_theme(self.viewer.theme, False).canvas.as_hex()
@@ -1044,7 +1044,7 @@ class QtViewer(QSplitter):
         self._show_welcome_screen = visible
         self._canvas_overlay.set_welcome_visible(visible)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QKeyEvent):
         """Called whenever a key is pressed.
 
         Parameters
@@ -1052,7 +1052,13 @@ class QtViewer(QSplitter):
         event : qtpy.QtCore.QEvent
             Event from the Qt context.
         """
-        self.canvas._backend._keyEvent(self.canvas.events.key_press, event)
+        from app_model.backends.qt import qkey2modelkey, qmods2modelmods
+
+        # TODO: QKeyEvent -> AppModel KeyCombo
+        # TODO: deal with case when key IS the modifier
+        print(qmods2modelmods(event.modifiers()) | qkey2modelkey(event.key()))
+
+        # self.canvas._backend._keyEvent(self.canvas.events.key_press, event)
         event.accept()
 
     def keyReleaseEvent(self, event):

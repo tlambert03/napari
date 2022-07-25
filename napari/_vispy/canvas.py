@@ -3,6 +3,9 @@
 from weakref import WeakSet
 
 from qtpy.QtCore import QSize
+from qtpy.QtGui import QKeyEvent
+from qtpy.QtWidgets import QWidget
+from vispy.app.backends._qt import CanvasBackendDesktop
 from vispy.scene import SceneCanvas, Widget
 
 from ..utils.colormaps.standardize_color import transform_color
@@ -96,3 +99,19 @@ class VispyCanvas(SceneCanvas):
         if event.type == 'mouse_wheel' and len(event.modifiers) > 0:
             return
         super()._process_mouse_event(event)
+
+    # overriding keyPressEvent and keyReleaseEvent
+    def create_native(self):
+        super().create_native()
+        self._backend.keyPressEvent = self._keyPressEvent
+        self._backend.keyReleaseEvent = self._keyReleaseEvent
+
+    def _keyPressEvent(self, event: QKeyEvent):
+        print("keyPressEvent on canvas", event.key())
+        # pass it through to qtviewer
+        QWidget.keyPressEvent(self._backend, event)
+
+    def _keyReleaseEvent(self, event: QKeyEvent):
+        print("keyReleaseEvent on canvas", event.key())
+        # pass it through to qtviewer
+        QWidget.keyReleaseEvent(self._backend, event)
