@@ -1,4 +1,4 @@
-.PHONY: docs typestubs pre watch dist settings-schema
+.PHONY: docs typestubs pre watch dist settings-schema changelog
 
 docs:
 	rm -rf docs/_build/
@@ -49,3 +49,10 @@ watch:
 			--signal SIGKILL \
 			napari -- $(WATCH_ARGS) || \
 		echo "please run 'pip install watchdog[watchmedo]'"
+
+# by default this will make a minor version bump (e.g v0.4.16 -> v0.4.17)
+LAST := $(shell git tag -l | grep "v[0-9]+*" |  awk '!/rc/' | sort -V | tail -1)
+SINCE := $(shell git log -1 -s --format=%cd --date=format:'%Y-%m-%d' $(LAST))
+NEXT := $(shell echo $(LAST) | awk -F. -v OFS=. '{$$NF += 1 ; print}')
+changelog:
+	github_changelog_generator --future-release=$(NEXT) --since-tag=$(LAST) --since-commit=$(SINCE)
