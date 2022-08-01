@@ -1,0 +1,7 @@
+user=napari
+project=napari
+issues=false
+max-issues=500
+exclude-labels=duplicate,question,invalid,wontfix,hide
+add-sections={ "tests":{"prefix":"**Tests & CI:**","labels":["tests"]}, "documentation":{"prefix":"**Documentation updates:**","labels":["documentation"]} }
+exclude-tags-regex=.*rc
