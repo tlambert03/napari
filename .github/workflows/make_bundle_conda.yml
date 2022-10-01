@@ -29,13 +29,13 @@ jobs:
 
     steps:
       - name: Checkout napari source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: napari-source
           fetch-depth: 0
 
       - name: Checkout conda-forge feedstock
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           repository: conda-forge/napari-feedstock
@@ -177,7 +177,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Create environment.yml
